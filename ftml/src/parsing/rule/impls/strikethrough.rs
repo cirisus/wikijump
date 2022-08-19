@@ -37,6 +37,14 @@ fn try_consume_fn<'p, 'r, 't>(
         ContainerType::Strikethrough,
         &[ParseCondition::current(Token::DoubleDash)],
         &[
+            ParseCondition::current(Token::LineBreak), // Normally in these formatting containers
+                                                       // we allow newlines, but here Wikidot ends
+                                                       // an attempt on a newline.
+                                                       //
+                                                       // Otherwise the use of "--" as an
+                                                       // em dash could result in a massive
+                                                       // failed parse attempt because of how
+                                                       // they make it ambiguous as a token...
             ParseCondition::current(Token::ParagraphBreak),
             ParseCondition::token_pair(Token::DoubleDash, Token::Whitespace),
             ParseCondition::token_pair(Token::Whitespace, Token::DoubleDash),
