@@ -849,17 +849,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d0165d2900ae6778e36e80bbc4da3b5eefccee9ba939761f9c2882a5d9af3ff"
 
 [[package]]
-name = "cron"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ff76b51e4c068c52bfd2866e1567bee7c567ae8f24ada09fd4307019e25eab7"
-dependencies = [
- "chrono",
- "nom 7.1.1",
- "once_cell",
-]
-
-[[package]]
 name = "crossbeam"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1135,7 +1124,6 @@ dependencies = [
  "chrono",
  "clap",
  "color-backtrace",
- "cron",
  "crossfire",
  "cuid",
  "dotenv",
