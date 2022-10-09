@@ -23,6 +23,8 @@ use crate::models::sea_orm_active_enums::UserType;
 use crate::models::user::{self, Entity as User, Model as UserModel};
 use crate::services::user_alias::{CreateUserAlias, UserAliasService};
 use crate::utils::get_user_slug;
+use sea_query::Expr;
+use sea_orm::UpdateResult;
 use std::cmp;
 
 // TODO make these configurable
@@ -381,6 +383,26 @@ impl UserService {
 
         model.update(txn).await?;
         Ok(name_changes)
+    }
+
+    /// Adds additional rename tokens to all users who are below the cap.
+    ///
+    /// # Returns
+    /// The number of users who had a token added.
+    pub async fn add_name_change_tokens_all(
+        ctx: &ServiceContext<'_>,
+    ) -> Result<u64> {
+        let txn = ctx.transaction();
+
+        tide::log::info!("Adding name change tokens to all users below the cap");
+
+        let UpdateResult { rows_affected } = User::update_many()
+            .col_expr(user::Column::NameChangesLeft, Expr::col(user::Column::NameChangesLeft).add(1))
+            .filter(user::Column::NameChangesLeft.lt(MAX_NAME_CHANGES))
+            .exec(txn)
+            .await?;
+
+        Ok(rows_affected)
     }
 
     pub async fn delete(
