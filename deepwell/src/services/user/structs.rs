@@ -128,3 +128,11 @@ impl From<&UserModel> for UserProfileOutput {
         }
     }
 }
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct NameChangeOutput {
+    pub previous: i16,
+    pub current: i16,
+    pub maximum: i16,
+}
