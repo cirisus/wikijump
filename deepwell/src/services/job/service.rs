@@ -21,6 +21,8 @@
 use super::prelude::*;
 use crate::api::ApiServerState;
 use crate::services::{RevisionService, UserService};
+use crate::utils::DateTimeWithTimeZone;
+use chrono::{DateTime, FixedOffset, Utc, NaiveDateTime};
 use async_std::task;
 use crossfire::mpsc;
 use sea_orm::TransactionTrait;
@@ -29,6 +31,14 @@ use std::time::Duration;
 use void::Void;
 
 lazy_static! {
+    /// A date in the past to mean that this job should be run immediately.
+    static ref RUN_NOW_TIMESTAMP: DateTimeWithTimeZone = {
+        let naive_datetime = NaiveDateTime::from_timestamp(1420088400, 0);
+        let utc_datetime: DateTime<Utc> = DateTime::from_utc(naive_datetime, Utc);
+        utc_datetime.into()
+    };
+
+    /// The static queue to hold jobs to be processed.
     static ref QUEUE: (mpsc::TxUnbounded<Job>, mpsc::RxUnbounded<Job>) =
         mpsc::unbounded_future();
 }
