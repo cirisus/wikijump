@@ -59,7 +59,7 @@ impl JobService {
             "Queueing page ID {page_id} in site ID {site_id} for rerendering",
         );
 
-        Self::queue_job(Job::RerenderPageId { site_id, page_id });
+        Self::queue_job(Job::now(JobAction::RerenderPage { site_id, page_id }));
     }
 }
 
@@ -103,8 +103,8 @@ impl JobRunner {
         let txn = self.state.database.begin().await?;
         let ctx = &ServiceContext::from_raw(&self.state, &txn);
 
-        match job {
-            Job::RerenderPageId { site_id, page_id } => {
+        match job.action {
+            JobAction::RerenderPage { site_id, page_id } => {
                 RevisionService::rerender(ctx, site_id, page_id).await?;
             }
         }
