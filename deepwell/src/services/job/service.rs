@@ -20,7 +20,7 @@
 
 use super::prelude::*;
 use crate::api::ApiServerState;
-use crate::services::RevisionService;
+use crate::services::{RevisionService, UserService};
 use async_std::task;
 use crossfire::mpsc;
 use sea_orm::TransactionTrait;
@@ -106,6 +106,9 @@ impl JobRunner {
         match job.action {
             JobAction::RerenderPage { site_id, page_id } => {
                 RevisionService::rerender(ctx, site_id, page_id).await?;
+            }
+            JobAction::AddRenameToken { user_id } => {
+                UserService::add_name_change_token(&ctx, Reference::Id(user_id)).await?;
             }
         }
 

@@ -54,4 +54,5 @@ impl Job {
 #[serde(rename_all = "snake_case", tag = "type")]
 pub enum JobAction {
     RerenderPage { site_id: i64, page_id: i64 },
+    AddRenameToken { user_id: i64 },
 }
