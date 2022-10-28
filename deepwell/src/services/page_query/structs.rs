@@ -18,5 +18,86 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::utils::DateTimeWithTimeZone;
+
 use super::prelude::*;
 
+#[derive(Debug)]
+pub enum PageTypeSelector {
+    Normal,
+    Hidden,
+    All,
+}
+
+#[derive(Debug)]
+pub enum IncludedCategories<'a> {
+    All,
+    List(&'a [&'a str]),
+}
+
+#[derive(Debug)]
+pub struct CategoriesSelector<'a> {
+    pub included_categories: IncludedCategories<'a>,
+    pub excluded_categories: &'a [&'a str],
+}
+
+#[derive(Debug)]
+pub enum TagCondition<'a> {
+    AnyPresent(&'a str),
+    AllPresent(&'a str),
+    AllAbsent(&'a str),
+}
+
+#[derive(Debug)]
+pub enum PageParentSelector<'a> {
+    NoParent,
+    SameParents,
+    DifferentParents,
+    ChildOf,
+    HasParents(&'a [&'a str])
+}
+
+#[derive(Debug)]
+pub enum DateTimeResolution {
+    Second,
+    Minute,
+    Hour,
+    Day,
+    Month,
+    Year,
+}
+
+#[derive(Debug)]
+pub enum ComparisonOperation {
+    GreaterThan,
+    LessThan,
+    GreaterOrEqualThan,
+    LessOrEqualThan,
+    Equal,
+    NotEqual,
+}
+
+#[derive(Debug)]
+pub enum DateSelector {
+    Span {
+        timestamp: DateTimeWithTimeZone,
+        resolution: DateTimeResolution,
+        comparison: ComparisonOperation,
+    },
+
+    FromPresent {
+        start_time: DateTimeWithTimeZone,
+    },
+}
+
+#[derive(Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatePageQuery<'a> {
+    pub current_page_id: u64,
+    pub page_type: PageTypeSelector,
+    pub categories: CategoriesSelector<'a>,
+    pub tags: &'a [TagCondition<'a>],
+    pub page_parent: PageParentSelector<'a>,
+    pub contains_outgoing_links: &'a [&'a str],
+    pub date: DateSelector,
+}
