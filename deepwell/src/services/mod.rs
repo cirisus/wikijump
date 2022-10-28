@@ -60,6 +60,7 @@ pub mod link;
 pub mod mfa;
 pub mod outdate;
 pub mod page;
+pub mod page_query;
 pub mod parent;
 pub mod password;
 pub mod render;
