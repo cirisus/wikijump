@@ -21,6 +21,7 @@
 use crate::utils::DateTimeWithTimeZone;
 
 use super::prelude::*;
+use regex::Regex;
 
 #[derive(Debug)]
 pub enum PageTypeSelector {
@@ -91,6 +92,116 @@ pub enum DateSelector {
 }
 
 #[derive(Debug)]
+pub struct RatingSelector {
+    pub rating: f64,
+    pub comparison: ComparisonOperation,
+}
+
+#[derive(Debug)]
+pub enum RangeSelector {
+    Current,
+    Before(u32),
+    After(u32),
+    Others,
+}
+
+#[derive(Debug)]
+pub struct DataFormSelector<'a> {
+    pub field: &'a str,
+    pub value: &'a str,
+}
+
+#[derive(Debug)]
+pub enum OrderProperties {
+    Name,
+    Fullname,
+    Title,
+    CreatedBy,
+    CreatedAt,
+    UpdatedAt,
+    Size,
+    Rating,
+    Votes,
+    Revisions,
+    Comments,
+    Random,
+    DataFormFieldName,
+} 
+
+#[derive(Debug)]
+pub struct OrderBySelector {
+    pub property: OrderProperties,
+    pub ascending: bool
+}
+
+#[derive(Debug)]
+pub struct PaginationSelector {
+    pub limit: u64,
+    pub per_page: u8,
+    pub reversed: bool,
+}
+
+#[derive(Debug)]
+pub enum PageQueryVariables<'a> {
+    CreatedAt,
+    CreatedBy,
+    CreatedByUnix,
+    CreayedByID,
+    CreatedByLinked,
+    UpdatedAt,
+    UpdatedBy,
+    UpdatedByUnix,
+    UpdatedByID,
+    UpdatedByLinked,
+    CommentedAt,
+    CommentedBy,
+    CommentedByUnix,
+    CommentedByID,
+    CommentedByLinked,
+    Name,
+    Category,
+    Fullname,
+    Title,
+    TitleLinked,
+    ParentNamed,
+    ParentCategory,
+    ParentFullname,
+    ParentTitle,
+    ParentTitleLinked,
+    Link,
+    Content,
+    ContentN(u64),
+    Preview,
+    PreviewN(u64),
+    Summary,
+    FirstParagraph,
+    Tags,
+    TagsLinked,
+    TagsLinkedURL(&'a str),
+    HiddenTags,
+    HiddenTagsLinked,
+    HiddenTagsLinkedURL(&'a str),
+    FormData(&'a str),
+    FormRaw(&'a str),
+    FormLabel(&'a str),
+    FormHint(&'a str),
+    Children,
+    Comments,
+    Size,
+    Rating,
+    RatingVotes,
+    RatingPercent,
+    Revisions,
+    Index,
+    Total,
+    Limit,
+    TotalOrLimit,
+    SiteTitle,
+    SiteName,
+    SiteDomain,
+}
+
+#[derive(Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatePageQuery<'a> {
     pub current_page_id: u64,
@@ -99,5 +210,17 @@ pub struct CreatePageQuery<'a> {
     pub tags: &'a [TagCondition<'a>],
     pub page_parent: PageParentSelector<'a>,
     pub contains_outgoing_links: &'a [&'a str],
-    pub date: DateSelector,
+    pub creation_date: DateSelector,
+    pub update_date: DateSelector,
+    pub author: &'a str,
+    pub rating: &'a [RatingSelector<'a>], // 5-star rating selector
+    pub votes: &'a [RatingSelector<'a>], // upvote/downvote rating selector
+    pub offset: u32,
+    pub range: RangeSelector,
+    pub name: Regex,
+    pub fullname: &str,
+    pub data_form_fields: &'a [DataFormSelector<'a>],
+    pub order: OrderBySelector,
+    pub pagination: PaginationSelector,
+    pub variables: &'a [PageQueryVariables<'a>],
 }
