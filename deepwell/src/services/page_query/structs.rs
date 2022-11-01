@@ -202,7 +202,6 @@ pub enum PageQueryVariables<'a> {
 }
 
 #[derive(Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct CreatePageQuery<'a> {
     pub current_page_id: u64,
     pub page_type: PageTypeSelector,
@@ -213,12 +212,12 @@ pub struct CreatePageQuery<'a> {
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
     pub author: &'a str,
-    pub rating: &'a [RatingSelector<'a>], // 5-star rating selector
-    pub votes: &'a [RatingSelector<'a>], // upvote/downvote rating selector
+    pub rating: &'a [RatingSelector], // 5-star rating selector
+    pub votes: &'a [RatingSelector], // upvote/downvote rating selector
     pub offset: u32,
     pub range: RangeSelector,
     pub name: Regex,
-    pub fullname: &str,
+    pub fullname: &'a str,
     pub data_form_fields: &'a [DataFormSelector<'a>],
     pub order: OrderBySelector,
     pub pagination: PaginationSelector,
