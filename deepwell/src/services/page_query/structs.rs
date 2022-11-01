@@ -22,6 +22,7 @@ use crate::utils::DateTimeWithTimeZone;
 
 use super::prelude::*;
 use regex::Regex;
+use std::borrow::Cow;
 
 #[derive(Debug)]
 pub enum PageTypeSelector {
@@ -33,20 +34,20 @@ pub enum PageTypeSelector {
 #[derive(Debug)]
 pub enum IncludedCategories<'a> {
     All,
-    List(&'a [&'a str]),
+    List(Cow<'a, [Cow<'a, str>]>),
 }
 
 #[derive(Debug)]
 pub struct CategoriesSelector<'a> {
     pub included_categories: IncludedCategories<'a>,
-    pub excluded_categories: &'a [&'a str],
+    pub excluded_categories: Cow<'a, [Cow<'a, str>]>,
 }
 
 #[derive(Debug)]
 pub enum TagCondition<'a> {
-    AnyPresent(&'a str),
-    AllPresent(&'a str),
-    AllAbsent(&'a str),
+    AnyPresent(Cow<'a, str>),
+    AllPresent(Cow<'a, str>),
+    AllAbsent(Cow<'a, str>),
 }
 
 #[derive(Debug)]
@@ -55,7 +56,7 @@ pub enum PageParentSelector<'a> {
     SameParents,
     DifferentParents,
     ChildOf,
-    HasParents(&'a [&'a str]),
+    HasParents(Cow<'a, [Cow<'a, str>]>),
 }
 
 #[derive(Debug)]
@@ -107,8 +108,8 @@ pub enum RangeSelector {
 
 #[derive(Debug)]
 pub struct DataFormSelector<'a> {
-    pub field: &'a str,
-    pub value: &'a str,
+    pub field: Cow<'a, str>,
+    pub value: Cow<'a, str>,
 }
 
 #[derive(Debug)]
@@ -177,14 +178,14 @@ pub enum PageQueryVariables<'a> {
     FirstParagraph,
     Tags,
     TagsLinked,
-    TagsLinkedURL(&'a str),
+    TagsLinkedURL(Cow<'a, str>),
     HiddenTags,
     HiddenTagsLinked,
-    HiddenTagsLinkedURL(&'a str),
-    FormData(&'a str),
-    FormRaw(&'a str),
-    FormLabel(&'a str),
-    FormHint(&'a str),
+    HiddenTagsLinkedURL(Cow<'a, str>),
+    FormData(Cow<'a, str>),
+    FormRaw(Cow<'a, str>),
+    FormLabel(Cow<'a, str>),
+    FormHint(Cow<'a, str>),
     Children,
     Comments,
     Size,
@@ -206,20 +207,20 @@ pub struct CreatePageQuery<'a> {
     pub current_page_id: u64,
     pub page_type: PageTypeSelector,
     pub categories: CategoriesSelector<'a>,
-    pub tags: &'a [TagCondition<'a>],
+    pub tags: Vec<TagCondition<'a>>,
     pub page_parent: PageParentSelector<'a>,
-    pub contains_outgoing_links: &'a [&'a str],
+    pub contains_outgoing_links:Vec<Cow<'a, str>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
-    pub author: &'a str,
-    pub rating: &'a [RatingSelector], // 5-star rating selector
-    pub votes: &'a [RatingSelector],  // upvote/downvote rating selector
+    pub author: Cow<'a, str>,
+    pub rating: Vec<RatingSelector>, // 5-star rating selector
+    pub votes: Vec<RatingSelector>,  // upvote/downvote rating selector
     pub offset: u32,
     pub range: RangeSelector,
     pub name: Regex,
-    pub fullname: &'a str,
-    pub data_form_fields: &'a [DataFormSelector<'a>],
+    pub fullname: Cow<'a, str>,
+    pub data_form_fields: Vec<DataFormSelector<'a>>,
     pub order: OrderBySelector,
     pub pagination: PaginationSelector,
-    pub variables: &'a [PageQueryVariables<'a>],
+    pub variables: Vec<PageQueryVariables<'a>>,
 }
