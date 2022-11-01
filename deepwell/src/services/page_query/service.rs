@@ -21,4 +21,6 @@
 #[derive(Debug)]
 pub struct PageQueryService;
 
-impl PageQueryService {/* TODO */}
+impl PageQueryService {
+    /* TODO */
+}

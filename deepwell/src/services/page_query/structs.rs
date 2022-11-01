@@ -55,7 +55,7 @@ pub enum PageParentSelector<'a> {
     SameParents,
     DifferentParents,
     ChildOf,
-    HasParents(&'a [&'a str])
+    HasParents(&'a [&'a str]),
 }
 
 #[derive(Debug)]
@@ -126,12 +126,12 @@ pub enum OrderProperties {
     Comments,
     Random,
     DataFormFieldName,
-} 
+}
 
 #[derive(Debug)]
 pub struct OrderBySelector {
     pub property: OrderProperties,
-    pub ascending: bool
+    pub ascending: bool,
 }
 
 #[derive(Debug)]
@@ -213,7 +213,7 @@ pub struct CreatePageQuery<'a> {
     pub update_date: DateSelector,
     pub author: &'a str,
     pub rating: &'a [RatingSelector], // 5-star rating selector
-    pub votes: &'a [RatingSelector], // upvote/downvote rating selector
+    pub votes: &'a [RatingSelector],  // upvote/downvote rating selector
     pub offset: u32,
     pub range: RangeSelector,
     pub name: Regex,
