@@ -20,37 +20,35 @@
 
 use crate::utils::DateTimeWithTimeZone;
 
-use super::prelude::*;
-use regex::Regex;
 use std::borrow::Cow;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum PageTypeSelector {
     Normal,
     Hidden,
     All,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum IncludedCategories<'a> {
     All,
     List(Cow<'a, [Cow<'a, str>]>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct CategoriesSelector<'a> {
     pub included_categories: IncludedCategories<'a>,
     pub excluded_categories: Cow<'a, [Cow<'a, str>]>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum TagCondition<'a> {
     AnyPresent(Cow<'a, str>),
     AllPresent(Cow<'a, str>),
     AllAbsent(Cow<'a, str>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum PageParentSelector<'a> {
     NoParent,
     SameParents,
@@ -59,7 +57,7 @@ pub enum PageParentSelector<'a> {
     HasParents(Cow<'a, [Cow<'a, str>]>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum DateTimeResolution {
     Second,
     Minute,
@@ -69,7 +67,7 @@ pub enum DateTimeResolution {
     Year,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum ComparisonOperation {
     GreaterThan,
     LessThan,
@@ -79,7 +77,7 @@ pub enum ComparisonOperation {
     NotEqual,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum DateSelector {
     Span {
         timestamp: DateTimeWithTimeZone,
@@ -92,13 +90,13 @@ pub enum DateSelector {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct RatingSelector {
     pub rating: f64,
     pub comparison: ComparisonOperation,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum RangeSelector {
     Current,
     Before(u32),
@@ -106,13 +104,13 @@ pub enum RangeSelector {
     Others,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct DataFormSelector<'a> {
     pub field: Cow<'a, str>,
     pub value: Cow<'a, str>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum OrderProperties {
     Name,
     Fullname,
@@ -129,20 +127,20 @@ pub enum OrderProperties {
     DataFormFieldName,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct OrderBySelector {
     pub property: OrderProperties,
     pub ascending: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct PaginationSelector {
     pub limit: u64,
     pub per_page: u8,
     pub reversed: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum PageQueryVariables<'a> {
     CreatedAt,
     CreatedBy,
@@ -202,7 +200,8 @@ pub enum PageQueryVariables<'a> {
     SiteDomain,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreatePageQuery<'a> {
     pub current_page_id: u64,
     pub page_type: PageTypeSelector,
@@ -217,7 +216,7 @@ pub struct CreatePageQuery<'a> {
     pub votes: Vec<RatingSelector>,  // upvote/downvote rating selector
     pub offset: u32,
     pub range: RangeSelector,
-    pub name: Regex,
+    pub name: Cow<'a, str>,
     pub fullname: Cow<'a, str>,
     pub data_form_fields: Vec<DataFormSelector<'a>>,
     pub order: OrderBySelector,
