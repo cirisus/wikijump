@@ -23,27 +23,27 @@ use crate::utils::DateTimeWithTimeZone;
 use std::borrow::Cow;
 
 /// The type of page based on visibility to select in a page query. A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible. 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum PageTypeSelector {
     Normal,
     Hidden,
     All,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum IncludedCategories<'a> {
     All,
     List(Cow<'a, [Cow<'a, str>]>),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct CategoriesSelector<'a> {
     pub included_categories: IncludedCategories<'a>,
     pub excluded_categories: Cow<'a, [Cow<'a, str>]>,
 }
 
 /// The tag conditions for the page query.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum TagCondition<'a> {
     /// Represents an OR operator for the tag; page may contain any of these tags.
     AnyPresent(Cow<'a, str>),
@@ -54,7 +54,7 @@ pub enum TagCondition<'a> {
 }
 
 /// The relationship of the pages being queried to their parent/child pages.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum PageParentSelector<'a> {
     /// Pages which do not have a parent page.
     NoParent,
@@ -68,7 +68,7 @@ pub enum PageParentSelector<'a> {
     HasParents(Cow<'a, [Cow<'a, str>]>),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum DateTimeResolution {
     Second,
     Minute,
@@ -78,7 +78,7 @@ pub enum DateTimeResolution {
     Year,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum ComparisonOperation {
     GreaterThan,
     LessThan,
@@ -88,7 +88,7 @@ pub enum ComparisonOperation {
     NotEqual,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum DateSelector {
     /// A time span represented by a timestamp, the "resolution" of the time, and a comparison operator. 
     Span {
@@ -103,14 +103,14 @@ pub enum DateSelector {
     },
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct RatingSelector {
     pub rating: f64,
     pub comparison: ComparisonOperation,
 }
 
 /// Range of pages to display, relative to the current page.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum RangeSelector {
     /// Display only the current page.
     Current,
@@ -123,13 +123,13 @@ pub enum RangeSelector {
 }
 
 /// Selects all pages that have a data form with matching field-value pairs. 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct DataFormSelector<'a> {
     pub field: Cow<'a, str>,
     pub value: Cow<'a, str>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum OrderProperties {
     Name,
     Fullname,
@@ -146,20 +146,20 @@ pub enum OrderProperties {
     DataFormFieldName,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct OrderBySelector {
     pub property: OrderProperties,
     pub ascending: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct PaginationSelector {
     pub limit: u64,
     pub per_page: u8,
     pub reversed: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub enum PageQueryVariables<'a> {
     CreatedAt,
     CreatedBy,
@@ -219,7 +219,7 @@ pub enum PageQueryVariables<'a> {
     SiteDomain,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatePageQuery<'a> {
     pub current_page_id: u64,
