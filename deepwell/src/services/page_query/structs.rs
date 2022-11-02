@@ -22,6 +22,7 @@ use crate::utils::DateTimeWithTimeZone;
 
 use std::borrow::Cow;
 
+/// The type of page based on visibility to select in a page query. A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible. 
 #[derive(Debug, Deserialize)]
 pub enum PageTypeSelector {
     Normal,
@@ -41,19 +42,29 @@ pub struct CategoriesSelector<'a> {
     pub excluded_categories: Cow<'a, [Cow<'a, str>]>,
 }
 
+/// The tag conditions for the page query.
 #[derive(Debug, Deserialize)]
 pub enum TagCondition<'a> {
+    /// Represents an OR operator for the tag; page may contain any of these tags.
     AnyPresent(Cow<'a, str>),
+    /// Represents the AND operator for the tag; page must contain all of these tags.
     AllPresent(Cow<'a, str>),
+    /// Represents the NOT operator for the tag; page must *not* contain any of these tags.
     AllAbsent(Cow<'a, str>),
 }
 
+/// The relationship of the pages being queried to their parent/child pages.
 #[derive(Debug, Deserialize)]
 pub enum PageParentSelector<'a> {
+    /// Pages which do not have a parent page.
     NoParent,
+    /// Pages which share the same parent page as the page making the query.
     SameParents,
+    /// Pages which do *not* share the same parent page as the page making the query.
     DifferentParents,
+    /// Pages which are children page of the page making the query.
     ChildOf,
+    /// Pages which have specified parent pages.
     HasParents(Cow<'a, [Cow<'a, str>]>),
 }
 
@@ -79,12 +90,14 @@ pub enum ComparisonOperation {
 
 #[derive(Debug, Deserialize)]
 pub enum DateSelector {
+    /// A time span represented by a timestamp, the "resolution" of the time, and a comparison operator. 
     Span {
         timestamp: DateTimeWithTimeZone,
         resolution: DateTimeResolution,
         comparison: ComparisonOperation,
     },
 
+    /// A time span represented by a timestamp, from present to the time specified. 
     FromPresent {
         start_time: DateTimeWithTimeZone,
     },
@@ -96,14 +109,20 @@ pub struct RatingSelector {
     pub comparison: ComparisonOperation,
 }
 
+/// Range of pages to display, relative to the current page.
 #[derive(Debug, Deserialize)]
 pub enum RangeSelector {
+    /// Display only the current page.
     Current,
-    Before(u32),
-    After(u32),
+    /// Display pages before the current page in queried results.
+    Before,
+    /// Display pages after the current page in queried results.
+    After,
+    /// Display all pages besides the current page.
     Others,
 }
 
+/// Selects all pages that have a data form with matching field-value pairs. 
 #[derive(Debug, Deserialize)]
 pub struct DataFormSelector<'a> {
     pub field: Cow<'a, str>,
