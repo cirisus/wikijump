@@ -22,7 +22,7 @@ use crate::utils::DateTimeWithTimeZone;
 
 use std::borrow::Cow;
 
-/// The type of page based on visibility to select in a page query. A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible. 
+/// The type of page based on visibility to select in a page query. A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum PageTypeSelector {
     Normal,
@@ -90,17 +90,15 @@ pub enum ComparisonOperation {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
 pub enum DateSelector {
-    /// A time span represented by a timestamp, the "resolution" of the time, and a comparison operator. 
+    /// A time span represented by a timestamp, the "resolution" of the time, and a comparison operator.
     Span {
         timestamp: DateTimeWithTimeZone,
         resolution: DateTimeResolution,
         comparison: ComparisonOperation,
     },
 
-    /// A time span represented by a timestamp, from present to the time specified. 
-    FromPresent {
-        start_time: DateTimeWithTimeZone,
-    },
+    /// A time span represented by a timestamp, from present to the time specified.
+    FromPresent { start_time: DateTimeWithTimeZone },
 }
 
 #[derive(Debug, Deserialize, PartialEq, Clone, Copy)]
@@ -122,7 +120,7 @@ pub enum RangeSelector {
     Others,
 }
 
-/// Selects all pages that have a data form with matching field-value pairs. 
+/// Selects all pages that have a data form with matching field-value pairs.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct DataFormSelector<'a> {
     pub field: Cow<'a, str>,
@@ -227,7 +225,7 @@ pub struct CreatePageQuery<'a> {
     pub categories: CategoriesSelector<'a>,
     pub tags: Vec<TagCondition<'a>>,
     pub page_parent: PageParentSelector<'a>,
-    pub contains_outgoing_links:Vec<Cow<'a, str>>,
+    pub contains_outgoing_links: Vec<Cow<'a, str>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
     pub author: Cow<'a, str>,
