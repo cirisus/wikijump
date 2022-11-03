@@ -22,7 +22,8 @@ use crate::utils::DateTimeWithTimeZone;
 
 use std::borrow::Cow;
 
-/// The type of page based on visibility to select in a page query. A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible.
+/// The type of page based on visibility to select in a page query.
+/// A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum PageTypeSelector {
     Normal,
@@ -161,17 +162,17 @@ pub struct PaginationSelector {
 pub enum PageQueryVariables<'a> {
     CreatedAt,
     CreatedBy,
-    CreatedByUnix,
+    CreatedBySlug,
     CreayedByID,
     CreatedByLinked,
     UpdatedAt,
     UpdatedBy,
-    UpdatedByUnix,
+    UpdatedBySlug,
     UpdatedByID,
     UpdatedByLinked,
     CommentedAt,
     CommentedBy,
-    CommentedByUnix,
+    CommentedBySlug,
     CommentedByID,
     CommentedByLinked,
     Name,
