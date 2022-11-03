@@ -220,7 +220,7 @@ pub enum PageQueryVariables<'a> {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CreatePageQuery<'a> {
+pub struct PageQuery<'a> {
     pub current_page_id: u64,
     pub page_type: PageTypeSelector,
     pub categories: CategoriesSelector<'a>,
