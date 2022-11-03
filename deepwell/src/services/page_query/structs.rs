@@ -23,7 +23,7 @@ use crate::utils::DateTimeWithTimeZone;
 use std::borrow::Cow;
 
 /// The type of page based on visibility to select in a page query. A page is hidden if its URL is prefixed by an underscore; otherwise, it is visible. 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum PageTypeSelector {
     Normal,
     Hidden,
@@ -54,7 +54,7 @@ pub enum TagCondition<'a> {
 }
 
 /// The relationship of the pages being queried to their parent/child pages.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Hash)]
 pub enum PageParentSelector<'a> {
     /// Pages which do not have a parent page.
     NoParent,
@@ -68,7 +68,7 @@ pub enum PageParentSelector<'a> {
     HasParents(Cow<'a, [Cow<'a, str>]>),
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum DateTimeResolution {
     Second,
     Minute,
@@ -78,7 +78,7 @@ pub enum DateTimeResolution {
     Year,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum ComparisonOperation {
     GreaterThan,
     LessThan,
@@ -110,7 +110,7 @@ pub struct RatingSelector {
 }
 
 /// Range of pages to display, relative to the current page.
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum RangeSelector {
     /// Display only the current page.
     Current,
@@ -129,7 +129,7 @@ pub struct DataFormSelector<'a> {
     pub value: Cow<'a, str>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum OrderProperties {
     Name,
     Fullname,
@@ -152,7 +152,7 @@ pub struct OrderBySelector {
     pub ascending: bool,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct PaginationSelector {
     pub limit: u64,
     pub per_page: u8,
