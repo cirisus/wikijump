@@ -18,6 +18,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::models::{
+    page::Model as PageModel, page_parent::Model as PageParentModel,
+    page_revision::Model as PageRevisionModel,
+};
 use crate::utils::DateTimeWithTimeZone;
 
 use std::borrow::Cow;
@@ -240,4 +244,17 @@ pub struct PageQuery<'a> {
     pub order: OrderBySelector,
     pub pagination: PaginationSelector,
     pub variables: Vec<PageQueryVariables<'a>>,
+}
+
+#[derive(Serialize, Debug, PartialEq, Clone)]
+pub struct PageQueryOutput<'a>(&'a [PageResult]);
+
+#[derive(Serialize, Debug, PartialEq, Clone)]
+pub struct PageResult {
+    metadata: PageModel,
+    last_revision: PageRevisionModel,
+    // last_comment: TODO,
+    page_parents: Vec<PageParentModel>,
+    wikitext: String,
+    score: f32,
 }
