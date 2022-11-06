@@ -18,9 +18,35 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::prelude::*;
+
 #[derive(Debug)]
 pub struct PageQueryService;
 
 impl PageQueryService {
-    /* TODO */
+    pub async fn construct_query<'a>(
+        ctx: &ServiceContext<'_>,
+        site_id: i64,
+        PageQuery {
+            current_page_id,
+            page_type,
+            categories,
+            tags,
+            page_parent,
+            contains_outgoing_links,
+            creation_date,
+            update_date,
+            author,
+            rating,
+            votes,
+            offset,
+            range,
+            name,
+            slug,
+            data_form_fields,
+            order,
+            pagination,
+            variables,
+        }: PageQuery<'_>,
+    ) -> Result<PageQueryOutput<'a>> {/* TODO */ todo!()}
 }
