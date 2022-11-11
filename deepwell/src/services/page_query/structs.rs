@@ -233,7 +233,7 @@ pub struct PageQuery<'a> {
     pub contains_outgoing_links: Vec<Cow<'a, str>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
-    pub author: Cow<'a, str>,
+    pub author: Vec<Cow<'a, str>>,
     pub rating: Vec<RatingSelector>, // 5-star rating selector
     pub votes: Vec<RatingSelector>,  // upvote/downvote rating selector
     pub offset: u32,
