@@ -19,6 +19,8 @@
  */
 
 use super::prelude::*;
+use sea_query::{Query, Expr};
+use crate::models::page::{self, Entity as Page, Model as PageModel};
 
 #[derive(Debug)]
 pub struct PageQueryService;
@@ -48,5 +50,22 @@ impl PageQueryService {
             pagination,
             variables,
         }: PageQuery<'_>,
-    ) -> Result<PageQueryOutput<'a>> {/* TODO */ todo!()}
+    ) -> Result<PageQueryOutput<'a>> {
+        let txn = ctx.transaction();
+
+        let mut query = Query::select().from(Page);
+
+        match page_type {
+            PageTypeSelector::Normal => query.and_where(Expr::col(page::Column::Slug).not_like("_%")),
+            PageTypeSelector::Hidden => query.and_where(Expr::col(page::Column::Slug).like("_%")),
+            PageTypeSelector::All => {},
+        }
+
+        /* TODO: categories, tags, page_parent, contains_outgoing_links,
+        creation_date, update_date, rating, votes */
+
+        query.offset(offset.into());
+
+        /* TODO:  range, name, slug, data_form_fields, order, pagination, variables */
+    }
 }
