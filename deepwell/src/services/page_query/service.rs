@@ -19,8 +19,9 @@
  */
 
 use super::prelude::*;
-use sea_query::{Query, Expr};
 use crate::models::page::{self, Entity as Page, Model as PageModel};
+use crate::models::page_category::{self, Entity as PageCategory};
+use sea_query::Query;
 
 #[derive(Debug)]
 pub struct PageQueryService;
@@ -53,22 +54,69 @@ impl PageQueryService {
     ) -> Result<PageQueryOutput<'a>> {
         let txn = ctx.transaction();
 
-        let mut query = Query::select().from(Page);
+        let mut condition = Condition::all();
 
         // If a specific page type is requested, check if the slug does or does not begin
         // with an underscore (which indicates if a page is hidden).
         match page_type {
-            PageTypeSelector::Normal => query.and_where(Expr::col(page::Column::Slug).not_like("_%")),
-            PageTypeSelector::Hidden => query.and_where(Expr::col(page::Column::Slug).like("_%")),
-            PageTypeSelector::All => {},
-        }
+            PageTypeSelector::Normal => {
+                condition = condition.add(page::Column::Slug.starts_with("_"))
+            }
+            PageTypeSelector::Hidden => {
+                condition = condition.add(page::Column::Slug.not_like("_%"))
+            } // TODO: https://github.com/SeaQL/sea-orm/issues/1221
+            PageTypeSelector::All => {}
+        };
 
-        /* TODO: categories, tags, page_parent, contains_outgoing_links,
-        creation_date, update_date, rating, votes */
+        // Adds a condition based on the catgeories that are included/excluded from the query.
+        // Subqueries are necessary due to category information being stored in a separate table.
+        condition =
+            match categories.included_categories {
+                // If all categories are selected (using an asterisk or by only specifying excluded categories),
+                // then filter only by site_id and exclude the excluded categories.
+                IncludedCategories::All => condition.add(
+                    page::Column::PageCategoryId.in_subquery(
+                        Query::select()
+                            .column(page_category::Column::CategoryId)
+                            .and_where(page_category::Column::SiteId.eq(site_id))
+                            .and_where(
+                                page_category::Column::Slug.is_not_in(
+                                    categories
+                                        .excluded_categories
+                                        .into_iter()
+                                        .map(|c| c.as_ref()),
+                                ),
+                            )
+                            .to_owned(),
+                    ),
+                ),
+                // If a specific list of categories is provided, filter by site_id, inclusion in the included categories,
+                // and exclude the excluded categories.
+                // NOTE: Exclusion can only have an effect in this query if it is *also* included. Although by definition
+                // this is the same as not including the category in the included categories to begin with, it is still
+                // accounted for to preserve backwards-compatibility with poorly-constructed listpages modules.
+                IncludedCategories::List(included_categories) => condition.add(
+                    page::Column::PageCategoryId.in_subquery(
+                        Query::select()
+                            .column(page_category::Column::CategoryId)
+                            .and_where(page_category::Column::SiteId.eq(site_id))
+                            .and_where(page_category::Column::Slug.is_in(
+                                included_categories.into_iter().map(|c| c.as_ref()),
+                            ))
+                            .and_where(
+                                page_category::Column::Slug.is_not_in(
+                                    categories
+                                        .excluded_categories
+                                        .into_iter()
+                                        .map(|c| c.as_ref()),
+                                ),
+                            )
+                            .to_owned(),
+                    ),
+                ),
+            }
 
-        // Offset by requested amount.
-        query.offset(offset.into());
-
-        /* TODO:  range, name, slug, data_form_fields, order, pagination, variables */
+        /* TODO: tags, page_parent, contains_outgoing_links, creation_date, update_date, rating, votes, offset,
+        range, name, slug, data_form_fields, order, pagination, variables */
     }
 }
