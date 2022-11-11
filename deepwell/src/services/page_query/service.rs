@@ -55,6 +55,8 @@ impl PageQueryService {
 
         let mut query = Query::select().from(Page);
 
+        // If a specific page type is requested, check if the slug does or does not begin
+        // with an underscore (which indicates if a page is hidden).
         match page_type {
             PageTypeSelector::Normal => query.and_where(Expr::col(page::Column::Slug).not_like("_%")),
             PageTypeSelector::Hidden => query.and_where(Expr::col(page::Column::Slug).like("_%")),
@@ -64,6 +66,7 @@ impl PageQueryService {
         /* TODO: categories, tags, page_parent, contains_outgoing_links,
         creation_date, update_date, rating, votes */
 
+        // Offset by requested amount.
         query.offset(offset.into());
 
         /* TODO:  range, name, slug, data_form_fields, order, pagination, variables */
