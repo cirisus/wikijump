@@ -38,13 +38,13 @@ pub enum PageTypeSelector {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub enum IncludedCategories<'a> {
     All,
-    List(Cow<'a, [Cow<'a, str>]>),
+    List(Vec<Cow<'a, str>>),
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 pub struct CategoriesSelector<'a> {
     pub included_categories: IncludedCategories<'a>,
-    pub excluded_categories: Cow<'a, [Cow<'a, str>]>,
+    pub excluded_categories: Vec<Cow<'a, str>>,
 }
 
 /// The tag conditions for the page query.
@@ -70,7 +70,7 @@ pub enum PageParentSelector<'a> {
     /// Pages which are children page of the page making the query.
     ChildOf,
     /// Pages which have specified parent pages.
-    HasParents(Cow<'a, [Cow<'a, str>]>),
+    HasParents(Vec<Cow<'a, str>>),
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
