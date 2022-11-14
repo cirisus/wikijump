@@ -56,6 +56,8 @@ impl PageQueryService {
 
         let mut condition = Condition::all();
 
+        // Page Type Filtering
+        //
         // If a specific page type is requested, check if the slug does or does not begin
         // with an underscore (which indicates if a page is hidden).
         match page_type {
@@ -68,12 +70,14 @@ impl PageQueryService {
             PageTypeSelector::All => {}
         };
 
+        // Category Filtering
+        //
         // Adds a condition based on the catgeories that are included/excluded from the query.
         // Subqueries are necessary due to category information being stored in a separate table.
         condition =
             match categories.included_categories {
                 // If all categories are selected (using an asterisk or by only specifying excluded categories),
-                // then filter only by site_id and exclude the excluded categories.
+                // then filter only by site_id and exclude the specified excluded categories.
                 IncludedCategories::All => condition.add(
                     page::Column::PageCategoryId.in_subquery(
                         Query::select()
@@ -90,8 +94,9 @@ impl PageQueryService {
                             .to_owned(),
                     ),
                 ),
-                // If a specific list of categories is provided, filter by site_id, inclusion in the included categories,
-                // and exclude the excluded categories.
+                // If a specific list of categories is provided, filter by site_id, inclusion in the specified included categories,
+                // and exclude the specified excluded categories.
+                //
                 // NOTE: Exclusion can only have an effect in this query if it is *also* included. Although by definition
                 // this is the same as not including the category in the included categories to begin with, it is still
                 // accounted for to preserve backwards-compatibility with poorly-constructed listpages modules.
