@@ -87,6 +87,7 @@ impl PageQueryService {
                     page::Column::PageCategoryId.in_subquery(
                         Query::select()
                             .column(page_category::Column::CategoryId)
+                            .from(PageCategory)
                             .and_where(page_category::Column::SiteId.eq(queried_site_id))
                             .and_where(
                                 page_category::Column::Slug.is_not_in(
@@ -109,6 +110,7 @@ impl PageQueryService {
                     page::Column::PageCategoryId.in_subquery(
                         Query::select()
                             .column(page_category::Column::CategoryId)
+                            .from(PageCategory)
                             .and_where(page_category::Column::SiteId.eq(queried_site_id))
                             .and_where(page_category::Column::Slug.is_in(
                                 included_categories.into_iter().map(|c| c.as_ref()),
