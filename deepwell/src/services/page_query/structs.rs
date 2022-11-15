@@ -60,17 +60,17 @@ pub enum TagCondition<'a> {
 
 /// The relationship of the pages being queried to their parent/child pages.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Hash)]
-pub enum PageParentSelector<'a> {
+pub enum PageParentSelector {
     /// Pages which do not have a parent page.
     NoParent,
-    /// Pages which share the same parent page as the page making the query.
-    SameParents,
-    /// Pages which do *not* share the same parent page as the page making the query.
-    DifferentParents,
+    /// Pages which share the same parent pages as the page making the query.
+    SameParents(Vec<u64>),
+    /// Pages which do *not* share the same parent pages as the page making the query.
+    DifferentParents(Vec<u64>),
     /// Pages which are children page of the page making the query.
     ChildOf,
     /// Pages which have specified parent pages.
-    HasParents(Vec<Cow<'a, str>>),
+    HasParents(Vec<u64>),
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
@@ -222,7 +222,7 @@ pub enum PageQueryVariables<'a> {
     SiteDomain,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PageQuery<'a> {
     pub current_page_id: u64,
@@ -230,7 +230,7 @@ pub struct PageQuery<'a> {
     pub page_type: PageTypeSelector,
     pub categories: CategoriesSelector<'a>,
     pub tags: Vec<TagCondition<'a>>,
-    pub page_parent: PageParentSelector<'a>,
+    pub page_parent: PageParentSelector,
     pub contains_outgoing_links: Vec<Cow<'a, str>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,

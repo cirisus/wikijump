@@ -21,6 +21,7 @@
 use super::prelude::*;
 use crate::models::page::{self, Entity as Page, Model as PageModel};
 use crate::models::page_category::{self, Entity as PageCategory};
+use crate::models::page_parent::{self, Entity as PageParent};
 use sea_query::Query;
 
 #[derive(Debug)]
@@ -69,16 +70,17 @@ impl PageQueryService {
             PageTypeSelector::Normal => {
                 condition = condition.add(page::Column::Slug.starts_with("_"))
             }
+
             PageTypeSelector::Hidden => {
                 condition = condition.add(page::Column::Slug.not_like("_%"))
             } // TODO: https://github.com/SeaQL/sea-orm/issues/1221
+
             PageTypeSelector::All => {}
         };
 
         // Category Filtering
         //
         // Adds a condition based on the catgeories that are included/excluded from the query.
-        // Subqueries are necessary due to category information being stored in a separate table.
         condition =
             match categories.included_categories {
                 // If all categories are selected (using an asterisk or by only specifying excluded categories),
@@ -100,6 +102,7 @@ impl PageQueryService {
                             .to_owned(),
                     ),
                 ),
+
                 // If a specific list of categories is provided, filter by site_id, inclusion in the specified included categories,
                 // and exclude the specified excluded categories.
                 //
@@ -128,7 +131,68 @@ impl PageQueryService {
                 ),
             };
 
-        /* TODO: tags, page_parent, contains_outgoing_links, creation_date, update_date, rating, votes, offset,
+        // Page Parent Selector
+        //
+        // Defines the relationship of the pages being queried with their parent pages.
+        condition = match page_parent {
+            // Pages with no parents, meaning they are not members of the page_parent table as children pages.
+            PageParentSelector::NoParent => condition.add(
+                page::Column::PageId.not_in_subquery(
+                    Query::select()
+                        .column(page_parent::Column::ChildPageId)
+                        .from(PageParent)
+                        .to_owned(),
+                ),
+            ),
+
+            // Pages with one of the same parents as the current page.
+            PageParentSelector::SameParents(parents) => condition.add(
+                page::Column::PageId.in_subquery(
+                    Query::select()
+                        .column(page_parent::Column::ChildPageId)
+                        .from(PageParent)
+                        .and_where(page_parent::Column::ParentPageId.is_in(parents))
+                        .to_owned(),
+                ),
+            ),
+
+            // Pages with none of the current page's parents.
+            PageParentSelector::DifferentParents(parents) => condition.add(
+                page::Column::PageId.in_subquery(
+                    Query::select()
+                        .column(page_parent::Column::ChildPageId)
+                        .from(PageParent)
+                        .and_where(page_parent::Column::ParentPageId.is_not_in(parents))
+                        .to_owned(),
+                ),
+            ),
+
+            // Children pages of the current page.
+            PageParentSelector::ChildOf => condition.add(
+                page::Column::PageId.in_subquery(
+                    Query::select()
+                        .column(page_parent::Column::ChildPageId)
+                        .from(PageParent)
+                        .and_where(page_parent::Column::ParentPageId.eq(current_page_id))
+                        .to_owned(),
+                ),
+            ),
+
+            // Pages with any of the specified parents.
+            // TODO: Change u64 to Reference.
+            // TODO: Possibly allow either *any* or *all* of specified parents rather than only any in the future.
+            PageParentSelector::HasParents(parents) => condition.add(
+                page::Column::PageId.in_subquery(
+                    Query::select()
+                        .column(page_parent::Column::ChildPageId)
+                        .from(PageParent)
+                        .and_where(page_parent::Column::ParentPageId.is_in(parents))
+                        .to_owned(),
+                ),
+            ),
+        };
+
+        /* TODO: tags, contains_outgoing_links, creation_date, update_date, rating, votes, offset,
         range, name, slug, data_form_fields, order, pagination, variables */
     }
 }
