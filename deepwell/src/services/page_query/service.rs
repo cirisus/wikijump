@@ -29,9 +29,9 @@ pub struct PageQueryService;
 impl PageQueryService {
     pub async fn construct_query<'a>(
         ctx: &ServiceContext<'_>,
-        site_id: i64,
         PageQuery {
             current_page_id,
+            queried_site_id,
             page_type,
             categories,
             tags,
@@ -55,6 +55,11 @@ impl PageQueryService {
         let txn = ctx.transaction();
 
         let mut condition = Condition::all();
+
+        // Queried Site ID
+        //
+        // The site to query. If not specified, will query current site.
+        condition = condition.add(page::Column::SiteId.eq(queried_site_id));
 
         // Page Type Filtering
         //
@@ -82,7 +87,7 @@ impl PageQueryService {
                     page::Column::PageCategoryId.in_subquery(
                         Query::select()
                             .column(page_category::Column::CategoryId)
-                            .and_where(page_category::Column::SiteId.eq(site_id))
+                            .and_where(page_category::Column::SiteId.eq(queried_site_id))
                             .and_where(
                                 page_category::Column::Slug.is_not_in(
                                     categories
@@ -104,7 +109,7 @@ impl PageQueryService {
                     page::Column::PageCategoryId.in_subquery(
                         Query::select()
                             .column(page_category::Column::CategoryId)
-                            .and_where(page_category::Column::SiteId.eq(site_id))
+                            .and_where(page_category::Column::SiteId.eq(queried_site_id))
                             .and_where(page_category::Column::Slug.is_in(
                                 included_categories.into_iter().map(|c| c.as_ref()),
                             ))
@@ -119,7 +124,7 @@ impl PageQueryService {
                             .to_owned(),
                     ),
                 ),
-            }
+            };
 
         /* TODO: tags, page_parent, contains_outgoing_links, creation_date, update_date, rating, votes, offset,
         range, name, slug, data_form_fields, order, pagination, variables */

@@ -226,6 +226,7 @@ pub enum PageQueryVariables<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct PageQuery<'a> {
     pub current_page_id: u64,
+    pub queried_site_id: u64,
     pub page_type: PageTypeSelector,
     pub categories: CategoriesSelector<'a>,
     pub tags: Vec<TagCondition<'a>>,
