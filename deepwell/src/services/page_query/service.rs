@@ -22,6 +22,7 @@ use super::prelude::*;
 use crate::models::page::{self, Entity as Page, Model as PageModel};
 use crate::models::page_category::{self, Entity as PageCategory};
 use crate::models::page_parent::{self, Entity as PageParent};
+use crate::services::PageService;
 use sea_query::Query;
 
 #[derive(Debug)]
@@ -179,17 +180,23 @@ impl PageQueryService {
             ),
 
             // Pages with any of the specified parents.
-            // TODO: Change u64 to Reference.
             // TODO: Possibly allow either *any* or *all* of specified parents rather than only any in the future.
-            PageParentSelector::HasParents(parents) => condition.add(
-                page::Column::PageId.in_subquery(
-                    Query::select()
-                        .column(page_parent::Column::ChildPageId)
-                        .from(PageParent)
-                        .and_where(page_parent::Column::ParentPageId.is_in(parents))
-                        .to_owned(),
-                ),
-            ),
+            PageParentSelector::HasParents(parents) => {
+                let parent_ids = PageService::get_ids(ctx, queried_site_id, &parents)
+                    .await?
+                    .into_iter()
+                    .filter_map(|id| id);
+
+                condition.add(
+                    page::Column::PageId.in_subquery(
+                        Query::select()
+                            .column(page_parent::Column::ChildPageId)
+                            .from(PageParent)
+                            .and_where(page_parent::Column::ParentPageId.is_in(parent_ids))
+                            .to_owned(),
+                    ),
+                )
+            }
         };
 
         /* TODO: tags, contains_outgoing_links, creation_date, update_date, rating, votes, offset,

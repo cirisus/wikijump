@@ -23,6 +23,7 @@ use crate::models::{
     page_revision::Model as PageRevisionModel,
 };
 use crate::utils::DateTimeWithTimeZone;
+use crate::web::Reference;
 
 use std::borrow::Cow;
 
@@ -60,7 +61,7 @@ pub enum TagCondition<'a> {
 
 /// The relationship of the pages being queried to their parent/child pages.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Hash)]
-pub enum PageParentSelector {
+pub enum PageParentSelector<'a> {
     /// Pages which do not have a parent page.
     NoParent,
     /// Pages which share the same parent pages as the page making the query.
@@ -70,7 +71,7 @@ pub enum PageParentSelector {
     /// Pages which are children page of the page making the query.
     ChildOf,
     /// Pages which have specified parent pages.
-    HasParents(Vec<u64>),
+    HasParents(Vec<Reference<'a>>),
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
@@ -225,12 +226,12 @@ pub enum PageQueryVariables<'a> {
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PageQuery<'a> {
-    pub current_page_id: u64,
-    pub queried_site_id: u64,
+    pub current_page_id: i64,
+    pub queried_site_id: i64,
     pub page_type: PageTypeSelector,
     pub categories: CategoriesSelector<'a>,
     pub tags: Vec<TagCondition<'a>>,
-    pub page_parent: PageParentSelector,
+    pub page_parent: PageParentSelector<'a>,
     pub contains_outgoing_links: Vec<Cow<'a, str>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
