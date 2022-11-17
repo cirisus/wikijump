@@ -542,6 +542,69 @@ impl PageService {
         Ok(pages)
     }
 
+    pub async fn get_ids(
+        ctx: &ServiceContext<'_>,
+        site_id: i64,
+        references: &[Reference<'_>],
+    ) -> Result<Vec<Option<i64>>> {
+        let txn = ctx.transaction();
+
+        // From list of unsorted references, get an iterator of IDs and an iterator of slugs.
+        let filter_ids: _ = {
+            references
+                .iter()
+                .copied()
+                .filter_map(|reference| match reference {
+                    Reference::Id(id) => Some(id),
+                    Reference::Slug(_) => None,
+                })
+        };
+
+        let filter_slugs: _ = {
+            references
+                .iter()
+                .copied()
+                .filter_map(|reference| match reference {
+                    Reference::Slug(slug) => Some(slug),
+                    Reference::Id(_) => None,
+                })
+        };
+
+        // Query all pages from the site which match either
+        let models = Page::find()
+            .filter(
+                Condition::all()
+                    .add(page::Column::SiteId.eq(site_id))
+                    .add(page::Column::DeletedAt.is_null())
+                    .add(
+                        Condition::any()
+                            .add(page::Column::PageId.is_in(filter_ids))
+                            .add(page::Column::Slug.is_in(filter_slugs)),
+                    ),
+            )
+            .all(txn)
+            .await?;
+
+        // Sort out the found models to be in the same order as the original reference slice
+        let found_page_ids = references
+            .iter()
+            .copied()
+            .map(|reference| {
+                let model = match reference {
+                    Reference::Id(id) => models.iter().find(|model| model.page_id == id),
+                    Reference::Slug(slug) => {
+                        models.iter().find(|model| model.slug == slug)
+                    }
+                };
+
+                // Only extract page ID
+                model.map(|model| model.page_id)
+            })
+            .collect();
+
+        Ok(found_page_ids)
+    }
+
     /// Checks to see if a page already exists at the slug specified.
     ///
     /// If so, this method fails with `Error::Conflict`. Otherwise it returns nothing.
