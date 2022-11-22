@@ -19,10 +19,13 @@
  */
 
 use super::prelude::*;
-use crate::models::page::{self, Entity as Page, Model as PageModel};
-use crate::models::page_category::{self, Entity as PageCategory};
-use crate::models::page_parent::{self, Entity as PageParent};
+use crate::models::{
+    page::{self, Entity as Page, Model as PageModel},
+    page_category::{self, Entity as PageCategory},
+    page_parent::{self, Entity as PageParent},
+};
 use crate::services::PageService;
+
 use sea_query::Query;
 
 #[derive(Debug)]
@@ -199,7 +202,13 @@ impl PageQueryService {
             }
         };
 
+        // Slug Condition
+        //
+        // Whether the page's slug is equal to the one provided.
+        condition = condition.add(page::Column::Slug.eq(slug.as_ref()));
+
+
         /* TODO: tags, contains_outgoing_links, creation_date, update_date, rating, votes, offset,
-        range, name, slug, data_form_fields, order, pagination, variables */
+        range, name, data_form_fields, order, pagination, variables */
     }
 }
