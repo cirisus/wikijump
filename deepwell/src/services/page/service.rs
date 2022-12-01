@@ -129,17 +129,17 @@ impl PageService {
             RevisionService::create(ctx, site_id, page_id, revision_input, last_revision)
                 .await?;
 
-        // Set page updated_at column.
-        //
-        // Previously this was conditional on whether a revision was actually created.
-        // But since this rerenders regardless, we need to update the page row.
-        let model = page::ActiveModel {
-            page_id: Set(page_id),
-            updated_at: Set(Some(now())),
-            ..Default::default()
-        };
+        // Set page updated_at and latest_revision column if a new revision was created.
+        if let Some(new_revision) = &revision_output {
+            let model = page::ActiveModel {
+                page_id: Set(page_id),
+                updated_at: Set(Some(now())),
+                latest_revision_id: Set(new_revision.revision_id),
+                ..Default::default()
+            };
 
-        model.update(txn).await?;
+            model.update(txn).await?;
+        }
 
         // Build and return
         Ok(revision_output)
@@ -196,39 +196,42 @@ impl PageService {
             RevisionService::create(ctx, site_id, page_id, revision_input, last_revision)
                 .await?;
 
+        // Build and return
+
+        let output = match revision_output {
+            Some(CreateRevisionOutput {
+                revision_id,
+                revision_number,
+                parser_errors,
+            }) => MovePageOutput {
+                old_slug,
+                new_slug,
+                revision_id,
+                revision_number,
+                parser_errors,
+            },
+            None => {
+                tide::log::error!("Page move did not create new revision");
+                return Err(Error::BadRequest);
+            }
+        };
+
         // Update page after move. This changes:
         // * slug             -- New slug for the page
         // * page_category_id -- In case the category also changed
         // * updated_at       -- This is updated every time a page is changed
         let model = page::ActiveModel {
             page_id: Set(page_id),
-            slug: Set(new_slug.clone()),
+            slug: Set(output.new_slug.clone()),
             page_category_id: Set(category_id),
             updated_at: Set(Some(now())),
+            latest_revision_id: Set(output.revision_id),
             ..Default::default()
         };
 
         model.update(txn).await?;
 
-        // Build and return
-
-        match revision_output {
-            Some(CreateRevisionOutput {
-                revision_id,
-                revision_number,
-                parser_errors,
-            }) => Ok(MovePageOutput {
-                old_slug,
-                new_slug,
-                revision_id,
-                revision_number,
-                parser_errors,
-            }),
-            None => {
-                tide::log::error!("Page move did not create new revision");
-                Err(Error::BadRequest)
-            }
-        }
+        Ok(output)
     }
 
     pub async fn delete(
@@ -264,6 +267,7 @@ impl PageService {
         let model = page::ActiveModel {
             page_id: Set(page_id),
             deleted_at: Set(Some(now())),
+            latest_revision_id: Set(output.revision_id),
             ..Default::default()
         };
 
@@ -332,6 +336,7 @@ impl PageService {
             page_id: Set(page_id),
             page_category_id: Set(category.category_id),
             deleted_at: Set(None),
+            latest_revision_id: Set(output.revision_id),
             ..Default::default()
         };
 
@@ -390,14 +395,17 @@ impl PageService {
             RevisionService::create(ctx, site_id, page_id, revision_input, last_revision)
                 .await?;
 
-        // Set page updated_at column.
-        let model = page::ActiveModel {
-            page_id: Set(page_id),
-            updated_at: Set(Some(now())),
-            ..Default::default()
-        };
+        // Set page updated_at and latest_revision_id columns if a new revision was created.
+        if let Some(output) = &revision_output {
+            let model = page::ActiveModel {
+                page_id: Set(page_id),
+                updated_at: Set(Some(now())),
+                latest_revision_id: Set(output.revision_id),
+                ..Default::default()
+            };
 
-        model.update(txn).await?;
+            model.update(txn).await?;
+        }
 
         // Build and return
         Ok(revision_output)
