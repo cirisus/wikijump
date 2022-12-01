@@ -20,12 +20,11 @@
 
 use super::prelude::*;
 use crate::models::{
-    page::{self, Entity as Page, Model as PageModel},
+    page::{self, Entity as Page},
     page_category::{self, Entity as PageCategory},
     page_parent::{self, Entity as PageParent},
 };
 use crate::services::PageService;
-
 use sea_query::Query;
 
 #[derive(Debug)]
@@ -99,7 +98,7 @@ impl PageQueryService {
                                 page_category::Column::Slug.is_not_in(
                                     categories
                                         .excluded_categories
-                                        .into_iter()
+                                        .iter()
                                         .map(|c| c.as_ref()),
                                 ),
                             )
@@ -120,13 +119,13 @@ impl PageQueryService {
                             .from(PageCategory)
                             .and_where(page_category::Column::SiteId.eq(queried_site_id))
                             .and_where(page_category::Column::Slug.is_in(
-                                included_categories.into_iter().map(|c| c.as_ref()),
+                                included_categories.iter().map(|c| c.as_ref()),
                             ))
                             .and_where(
                                 page_category::Column::Slug.is_not_in(
                                     categories
                                         .excluded_categories
-                                        .into_iter()
+                                        .iter()
                                         .map(|c| c.as_ref()),
                                 ),
                             )
