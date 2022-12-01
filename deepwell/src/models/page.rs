@@ -12,6 +12,7 @@ pub struct Model {
     pub updated_at: Option<DateTimeWithTimeZone>,
     pub deleted_at: Option<DateTimeWithTimeZone>,
     pub site_id: i64,
+    pub latest_revision_id: i64,
     pub page_category_id: i64,
     #[sea_orm(column_type = "Text")]
     pub slug: String,

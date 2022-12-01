@@ -109,6 +109,7 @@ CREATE TABLE page (
     updated_at TIMESTAMP WITH TIME ZONE,
     deleted_at TIMESTAMP WITH TIME ZONE,
     site_id BIGINT NOT NULL REFERENCES site(site_id),
+    latest_revision_id: INT,
     page_category_id BIGINT NOT NULL REFERENCES page_category(category_id),
     slug TEXT NOT NULL,
     discussion_thread_id BIGINT, -- TODO: add REFERENCES to forum threads
