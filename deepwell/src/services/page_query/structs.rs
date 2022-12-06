@@ -50,13 +50,13 @@ pub struct CategoriesSelector<'a> {
 
 /// The tag conditions for the page query.
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-pub enum TagCondition<'a> {
-    /// Represents an OR operator for the tag; page may contain any of these tags.
-    AnyPresent(Cow<'a, str>),
-    /// Represents the AND operator for the tag; page must contain all of these tags.
-    AllPresent(Cow<'a, str>),
-    /// Represents the NOT operator for the tag; page must *not* contain any of these tags.
-    AllAbsent(Cow<'a, str>),
+pub struct TagCondition<'a> {
+    /// Represents an OR operator for the tags; page may contain any of these tags.
+    pub any_present: Vec<Cow<'a, str>>,
+    /// Represents the AND operator for the tags; page must contain all of these tags.
+    pub all_present: Vec<Cow<'a, str>>,
+    /// Represents the NOT operator for the tags; page must *not* contain any of these tags.
+    pub none_present: Vec<Cow<'a, str>>,
 }
 
 /// The relationship of the pages being queried to their parent/child pages.
@@ -230,7 +230,7 @@ pub struct PageQuery<'a> {
     pub queried_site_id: i64,
     pub page_type: PageTypeSelector,
     pub categories: CategoriesSelector<'a>,
-    pub tags: Vec<TagCondition<'a>>,
+    pub tags: TagCondition<'a>,
     pub page_parent: PageParentSelector<'a>,
     pub contains_outgoing_links: Vec<Cow<'a, str>>,
     pub creation_date: DateSelector,
