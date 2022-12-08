@@ -24,6 +24,7 @@ use super::prelude::*;
 use crate::models::{
     page::{self, Entity as Page},
     page_category::{self, Entity as PageCategory},
+    page_connection::{self, Entity as PageConnection},
     page_parent::{self, Entity as PageParent},
     page_revision,
 };
@@ -201,6 +202,31 @@ impl PageQueryService {
         // Whether the page's slug is equal to the one provided.
         condition = condition.add(page::Column::Slug.eq(slug.as_ref()));
 
+        // Contains Link Selector
+        //
+        // Selects pages that have an outgoing link (`FromPageId`) to a specified page (`ToPageId`).
+        condition = condition.add(
+            page::Column::PageId.in_subquery(
+                Query::select()
+                    .column(page_connection::Column::FromPageId)
+                    .from(PageConnection)
+                    .and_where(
+                        // Get Page IDs from Reference structs. Uses result to only select pages that
+                        // have an outgoing link to those pages.
+                        page_connection::Column::ToPageId.is_in(
+                            PageService::get_ids(
+                                ctx,
+                                queried_site_id,
+                                &contains_outgoing_links,
+                            )
+                            .await?
+                            .into_iter()
+                            .filter_map(|id| id),
+                        ),
+                    )
+                    .to_owned(),
+            ),
+        );
 
         // Converts tag fields of Vec<Cow<str>> to Vec<String> for use in tag filtering.
         let (any_tags, all_tags, no_tags) = (
@@ -217,7 +243,7 @@ impl PageQueryService {
             // Performs an inner join connecting the `page` table with the `page_revision` table.
             // Only the latest revision per page is joined by equating latest revision IDs and the Page IDs.
             .join(
-                JoinType::InnerJoin,
+                JoinType::LeftJoin,
                 page::Relation::PageRevision
                     .def()
                     .on_condition(move |left, right| {
@@ -226,6 +252,7 @@ impl PageQueryService {
                             Expr::tbl(left.clone(), page::Column::LatestRevisionId)
                                 .equals(right.clone(), page_revision::Column::RevisionId),
                             // Ensure pages match by page ID.
+                            // TODO: Check if this condition is superfluous.
                             Expr::tbl(left, page::Column::PageId)
                                 .equals(right.clone(), page_revision::Column::PageId),
                             // Use Postgres "array overlap" operator to select pages that have any of the following inputted tags.
@@ -249,8 +276,8 @@ impl PageQueryService {
             .all(txn)
             .await?;
 
-        /* TODO: contains_outgoing_links, creation_date, update_date, rating, votes, offset,
-        range, name, data_form_fields, order, pagination, variables */
+        /* TODO: creation_date, update_date, rating, votes, offset, range, name, data_form_fields,
+        order, pagination, variables */
 
         return Ok(true);
     }
