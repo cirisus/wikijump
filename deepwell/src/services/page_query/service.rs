@@ -75,12 +75,12 @@ impl PageQueryService {
         // with an underscore (which indicates if a page is hidden).
         match page_type {
             PageTypeSelector::Normal => {
-                condition = condition.add(page::Column::Slug.starts_with("_"))
-            }
-
-            PageTypeSelector::Hidden => {
                 condition = condition.add(page::Column::Slug.not_like("_%"))
             } // TODO: https://github.com/SeaQL/sea-orm/issues/1221
+
+            PageTypeSelector::Hidden => {
+                condition = condition.add(page::Column::Slug.starts_with("_"))
+            }
 
             PageTypeSelector::All => {}
         };
