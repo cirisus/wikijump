@@ -232,7 +232,7 @@ pub struct PageQuery<'a> {
     pub categories: CategoriesSelector<'a>,
     pub tags: TagCondition<'a>,
     pub page_parent: PageParentSelector<'a>,
-    pub contains_outgoing_links: Vec<Cow<'a, str>>,
+    pub contains_outgoing_links: Vec<Reference<'a>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
     pub author: Vec<Cow<'a, str>>,
