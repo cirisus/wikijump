@@ -28,6 +28,7 @@ use crate::models::{
     page_parent::{self, Entity as PageParent},
     page_revision,
 };
+use crate::web::SerialReference;
 use crate::services::PageService;
 use sea_query::{all, Expr, Query};
 
@@ -178,10 +179,17 @@ impl PageQueryService {
             // Pages with any of the specified parents.
             // TODO: Possibly allow either *any* or *all* of specified parents rather than only any in the future.
             PageParentSelector::HasParents(parents) => {
-                let parent_ids = PageService::get_ids(ctx, queried_site_id, &parents)
-                    .await?
-                    .into_iter()
-                    .filter_map(|id| id);
+                let parent_ids = PageService::get_ids(
+                    ctx,
+                    queried_site_id,
+                    &parents
+                        .iter()
+                        .map(|r| r.as_reference())
+                        .collect::<Vec<Reference>>(),
+                )
+                .await?
+                .into_iter()
+                .filter_map(|id| id);
 
                 condition.add(
                     page::Column::PageId.in_subquery(
@@ -217,14 +225,16 @@ impl PageQueryService {
                             PageService::get_ids(
                                 ctx,
                                 queried_site_id,
-                                &contains_outgoing_links,
+                                &contains_outgoing_links
+                                    .iter()
+                                    .map(|r| r.as_reference())
+                                    .collect::<Vec<Reference>>(),
                             )
                             .await?
                             .into_iter()
                             .filter_map(|id| id),
-                        ),
-                    )
-                    .to_owned(),
+                        )
+                    ).to_owned(),
             ),
         );
 

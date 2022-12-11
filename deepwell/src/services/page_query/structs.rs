@@ -23,7 +23,7 @@ use crate::models::{
     page_revision::Model as PageRevisionModel,
 };
 use crate::utils::DateTimeWithTimeZone;
-use crate::web::Reference;
+use crate::web::SerialReference;
 
 use std::borrow::Cow;
 
@@ -71,7 +71,7 @@ pub enum PageParentSelector<'a> {
     /// Pages which are children page of the page making the query.
     ChildOf,
     /// Pages which have specified parent pages.
-    HasParents(Vec<Reference<'a>>),
+    HasParents(Vec<SerialReference<'a>>),
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Copy, Hash)]
@@ -232,7 +232,7 @@ pub struct PageQuery<'a> {
     pub categories: CategoriesSelector<'a>,
     pub tags: TagCondition<'a>,
     pub page_parent: PageParentSelector<'a>,
-    pub contains_outgoing_links: Vec<Reference<'a>>,
+    pub contains_outgoing_links: Vec<SerialReference<'a>>,
     pub creation_date: DateSelector,
     pub update_date: DateSelector,
     pub author: Vec<Cow<'a, str>>,
