@@ -38,6 +38,6 @@ pub use self::fetch_limit::{
 pub use self::file_details::FileDetailsQuery;
 pub use self::page_details::PageDetailsQuery;
 pub use self::provided_value::ProvidedValue;
-pub use self::reference::{CuidReference, Reference};
+pub use self::reference::{CuidReference, Reference, SerialReference};
 pub use self::unwrap::HttpUnwrap;
 pub use self::user_details::{UserDetails, UserDetailsQuery};

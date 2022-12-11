@@ -28,3 +28,4 @@ mod id;
 
 pub use self::cuid::CuidReference;
 pub use self::id::Reference;
+pub use self::id::SerialReference;

@@ -19,13 +19,20 @@
  */
 
 use crate::api::ApiRequest;
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom};
 use tide::{Error, StatusCode};
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum Reference<'a> {
     Id(i64),
     Slug(&'a str),
+}
+
+/// This is an enum for serializing and deserializing `Reference`.
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
+pub enum SerialReference<'a> {
+    Id(i64),
+    Slug(Cow<'a, str>),
 }
 
 impl<'a> Reference<'a> {
@@ -79,5 +86,26 @@ impl<'a> TryFrom<&'a ApiRequest> for Reference<'a> {
     #[inline]
     fn try_from(req: &'a ApiRequest) -> Result<Reference<'a>, Error> {
         Reference::try_from_fields_key(req, "type", "id_or_slug")
+    }
+}
+
+impl<'a> From<Reference<'a>> for SerialReference<'a> {
+    #[inline]
+    fn from(reference: Reference<'a>) -> SerialReference<'a> {
+        match reference {
+            Reference::Id(id) => SerialReference::Id(id),
+            Reference::Slug(slug) => SerialReference::Slug(Cow::from(slug)),
+        }
+    }
+}
+
+impl<'a> SerialReference<'a> {
+    pub fn as_reference(
+        self: &'a Self,
+    ) -> Reference<'a> {
+        match self {
+            SerialReference::Id(id) => Reference::Id(*id),
+            SerialReference::Slug(ref slug) => Reference::Slug(slug),
+        }
     }
 }
