@@ -100,7 +100,7 @@ impl<'a> From<Reference<'a>> for SerialReference<'a> {
 }
 
 impl<'a> SerialReference<'a> {
-    pub fn as_reference(
+    pub fn as_reference_struct(
         self: &'a Self,
     ) -> Reference<'a> {
         match self {

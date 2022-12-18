@@ -184,7 +184,7 @@ impl PageQueryService {
                     queried_site_id,
                     &parents
                         .iter()
-                        .map(|r| r.as_reference())
+                        .map(|r| r.as_reference_struct())
                         .collect::<Vec<Reference>>(),
                 )
                 .await?
@@ -227,7 +227,7 @@ impl PageQueryService {
                                 queried_site_id,
                                 &contains_outgoing_links
                                     .iter()
-                                    .map(|r| r.as_reference())
+                                    .map(|r| r.as_reference_struct())
                                     .collect::<Vec<Reference>>(),
                             )
                             .await?
