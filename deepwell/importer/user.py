@@ -1,5 +1,4 @@
 import json
-import glob
 import os
 from dataclasses import dataclass
 
@@ -16,14 +15,14 @@ class User:
 def load_users(users_directory):
     users = []
 
-    for path in glob.iglob(os.path.join(users_directory, "*.json")):
-        if os.path.basename(path) == "pending.json":
+    for filename in os.listdir(users_directory):
+        if filename == "pending.json":
             # Doesn't contain user info, skip
             continue
 
-        print(f"Loading users from {path}")
+        print(f"Loading users from {filename}")
 
-        with open(path) as file:
+        with open(os.path.join(users_directory, filename)) as file:
             users_data = json.load(file)
 
         for _, user_data in users_data:

@@ -23,19 +23,16 @@ class Ingester:
         self.conn = sqlite3.connect(database_path)
 
     def setup(self):
-        cur = self.conn.cursor()
-        cur.executescript(SQLITE_SCHEMA)
+        with self.conn as cur:
+            cur.executescript(SQLITE_SCHEMA)
 
     def close(self):
         self.conn.close()
 
-    # Private helper methods
-    def section(self, *parts):
-        return os.path.join(self.directory, *parts)
-
-    # Object ingestion
     def ingest_users(self):
-        users = load_users(self.section("_users"))
+        print("+ Ingesting user data")
+
+        users = load_users(os.path.join(self.directory, "_users"))
         rows = [
             (
                 user.wikidot_id,
@@ -60,7 +57,21 @@ class Ingester:
         VALUES (?, ?, ?, ?, ?, ?)
         """
 
-        cur = self.conn.cursor()
-        cur.executemany(query, rows)
+        with self.conn as cur:
+            cur.executemany(query, rows)
 
-    # TODO
+    def ingest_sites(self):
+        print("+ Ingesting site data")
+
+        for site in os.listdir(self.directory):
+            if site == "_users":
+                # Special directory for user information
+                continue
+
+            self.ingest_site(self, site)
+
+    def ingest_site(self, site):
+        print(f"+ Ingesting site '{site}'")
+        site_directory = os.path.join(self.directory, site)
+        self.ingest_pages(self, site_directory)
+        self.ingest_files(self, site_directory)
