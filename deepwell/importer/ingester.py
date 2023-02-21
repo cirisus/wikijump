@@ -76,3 +76,11 @@ class Ingester:
         site_directory = os.path.join(self.directory, site)
         self.ingest_pages(self, site_directory)
         self.ingest_files(self, site_directory)
+
+    def ingest_pages(self, site_directory):
+        logger.info("Ingesting all pages from site")
+        # TODO
+
+    def ingest_files(self, site_directory):
+        logger.info("Ingesting all files from site")
+        # TODO
