@@ -2,8 +2,6 @@ import logging
 import os
 import sqlite3
 
-from .user import load_users
-
 SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS user (
     wikidot_id INTEGER PRIMARY KEY,
@@ -71,7 +69,7 @@ class Ingester:
     # Main methods, and loaders
     def ingest_users(self):
         logger.info("Ingesting all user data")
-        users = load_users()
+        users = self.load_users()
         rows = [
             (
                 user.wikidot_id,
