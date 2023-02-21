@@ -21,18 +21,13 @@ class Page:
 
 @dataclass(frozen=True)
 class PageRevision:
-    wikidot_id: Optional[int]
+    wikidot_id: int
     revision_number: int
-    created_at: datetime
+    created_at: int
     flags: str
     page_id: int
-    site_id: int
     user_id: int
     wikitext: str
-    html: str
-    slug: str
-    title: str
-    tags: List[str]
     comments: str
 
 

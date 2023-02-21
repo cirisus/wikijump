@@ -1,6 +1,13 @@
 import logging
 import os
+import re
 import sqlite3
+
+from .structures import *
+
+from py7zr import SevenZipFile
+
+REVISION_FILENAME_REGEX = re.compile(r"(\d+)\.txt")
 
 SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS user (
@@ -31,6 +38,7 @@ CREATE TABLE IF NOT EXISTS page_revision (
     created_at INTEGER NOT NULL,
     flags TEXT NOT NULL,
     comments TEXT NOT NULL,
+    wikitext TEXT NOT NULL,
 
     UNIQUE (page_id, revision_number)
 );
@@ -48,12 +56,13 @@ logger = logging.getLogger(__name__)
 
 
 class Ingester:
-    __slots__ = ("directory", "conn")
+    __slots__ = ("directory", "conn", "replace_colons")
 
     # Init and deinit
-    def __init__(self, wikicomma_directory, database_path):
+    def __init__(self, wikicomma_directory, database_path, replace_colons):
         self.directory = wikicomma_directory
         self.conn = sqlite3.connect(database_path)
+        self.replace_colons = replace_colons
 
     def setup(self):
         with self.conn as cur:
@@ -74,6 +83,19 @@ class Ingester:
 
         with open(path) as file:
             return json.load(file)
+
+    def process_filename(self, filename):
+        # Wikicomma uses underscores even though
+        # colons are valid in UNIX paths.
+        if self.replace_colons:
+            return filename.replace(":", "_")
+
+        return filename
+
+    def open_revisions(self, site_directory, page_slug):
+        filename = self.process_filename(f"{page_slug}.7z")
+        path = os.path.join(site_directory, "pages", filename)
+        return SevenZipFile(path, "r")
 
     # Main ingestion methods
     def ingest_users(self):
@@ -158,7 +180,7 @@ class Ingester:
 
     def ingest_page(self, site_directory, site_slug, page_id, page_slug):
         def read_page_metadata():
-            filename = f"{page_slug}.json"
+            filename = self.process_filename(f"{page_slug}.json")
             metadata = self.read_json(site_directory, "meta", "pages", filename)
             assert metadata["name"] == page_slug, "Path and metadata slug do not match"
             return metadata
@@ -201,11 +223,17 @@ class Ingester:
             )
 
         self.ingest_votes(page.wikidot_id, metadata["votings"])
-        self.ingest_revisions(page.wikidot_id, metadata["revisions"])
         self.ingest_files(page.wikidot_id, site_slug, metadata["files"])
+        self.ingest_revisions(
+            page.wikidot_id,
+            site_directory,
+            page_slug,
+            page.wikidot_id,
+            metadata["revisions"],
+        )
 
     def ingest_votes(self, page_id, votes):
-        logger.info("Adding %d votes for the page", len(votes))
+        logger.info("Adding %d votes for this page", len(votes))
 
         def convert_vote_value(value):
             if isinstance(value, int):
@@ -235,9 +263,65 @@ class Ingester:
         with self.conn as cur:
             cur.executemany(query, rows)
 
-    def ingest_revisions(self, page_id, revisions):
-        # TODO
-        logger.error("ingest_revisions() not implemented")
+    def ingest_revisions(self, site_directory, page_slug, page_id, revisions):
+        logger.info("Adding %d revisions for this page", len(revisions))
+
+        query = """
+        INSERT INTO page_revision (
+            wikidot_id,
+            revision_number,
+            page_id,
+            user_id,
+            created_at,
+            flags,
+            comments,
+            wikitext
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+        logger.info("Loading wikitext revisions for this page")
+        wikitexts = {}
+        with self.open_revisions(site_directory, page_slug) as archive:
+            for filename, data in archive.readall().items():
+                logger.debug("Found file in archive: %s", filename)
+                match = REVISION_FILENAME_REGEX.fullmatch(filename)
+                revision_number = int(match[1])
+                wikitext = data.read().decode("utf-8")
+
+                wikitexts[revision_number] = wikitext
+
+        logger.info("Inserting revisions for this page")
+        for data in revisions:
+            revision = PageRevision(
+                wikidot_id=data["global_revision"],
+                revision_number=data["revision"],
+                created_at=data["stamp"],
+                flags=data["flags"],
+                page_id=page_id,
+                user_id=data["author"],
+                wikitext=wikitexts[data["revision"]],
+                comments=data["commentary"],
+            )
+
+            with self.conn as cur:
+                logger.info(
+                    "Inserting revision #%d, ID %d",
+                    revision.revision_number,
+                    revision.wikidot_id,
+                )
+                cur.execute(
+                    query,
+                    (
+                        revision.wikidot_id,
+                        revision.revision_number,
+                        revision.created_at,
+                        revision.flags,
+                        revision.page_id,
+                        revision.user_id,
+                        revision.wikitext,
+                        revision.comments,
+                    ),
+                )
 
     def ingest_files(self, page_id, site_slug, files):
         # TODO

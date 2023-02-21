@@ -16,14 +16,14 @@ if __name__ == "__main__":
         "--no-stdout",
         dest="stdout",
         action="store_false",
-        help="Don't output to standard out.",
+        help="Don't output to standard out",
     )
     argparser.add_argument(
         "-D",
         "--debug",
         dest="debug",
         action="store_true",
-        help="Set logging level to debug.",
+        help="Set logging level to debug",
     )
     argparser.add_argument(
         "-d",
@@ -41,6 +41,14 @@ if __name__ == "__main__":
         required=True,
         help="The path of the SQLite database to write to",
     )
+    argparser.add_argument(
+        "-k",
+        "--colon",
+        "--replace-colons",
+        dest="replace_colons",
+        action="store_true",
+        help="Whether files use underscores instead of colons in filenames",
+    )
     args = argparser.parse_args()
 
     log_fmtr = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
@@ -52,7 +60,9 @@ if __name__ == "__main__":
     logger.setLevel(level=log_level)
     logger.addHandler(log_stdout)
 
-    ingester = Ingester(args.wikicomma_directory, args.sqlite_database_path)
+    ingester = Ingester(
+        args.wikicomma_directory, args.sqlite_database_path, args.replace_colons,
+    )
     try:
         ingester.setup()
         ingester.ingest_users()
