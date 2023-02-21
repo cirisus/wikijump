@@ -40,10 +40,10 @@ class PageVote:
 
 @dataclass(frozen=True)
 class File:
-    wikidot_id: Optional[int]
+    wikidot_id: int
     page_id: int
     name: str
     mime: str
     size: int
     user_id: int
-    created_at: datetime
+    created_at: int
