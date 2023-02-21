@@ -32,9 +32,12 @@ class Ingester:
     def close(self):
         self.conn.close()
 
+    def path(self, *parts):
+        return os.path.join(self.directory, *parts)
+
     def ingest_users(self):
         logger.info("Ingesting all user data")
-        users = load_users(os.path.join(self.directory, "_users"))
+        users = load_users()
         rows = [
             (
                 user.wikidot_id,
@@ -62,11 +65,37 @@ class Ingester:
         with self.conn as cur:
             cur.executemany(query, rows)
 
+    def load_users(self):
+        users = []
+
+        for filename in os.listdir(self.path("_users")):
+            if filename == "pending.json":
+                logger.debug("Skipping pending.json file")
+                continue
+
+            logger.info("Loading users from %s", filename)
+            with open(os.path.join(users_directory, filename)) as file:
+                users_data = json.load(file)
+
+            for _, user_data in users_data:
+                users.append(
+                    User(
+                        full_name=user_data["full_name"],
+                        slug=user_data["slug"],
+                        created_at=user_data["wikidot_user_since"],
+                        account_type=user_data["account_type"],
+                        karma=user_data["activity"],
+                        wikidot_id=user_data["user_id"],
+                    )
+                )
+
+        return users
+
     def ingest_sites(self):
         logger.info("Ingesting all site data")
         for site in os.listdir(self.directory):
             if site == "_users":
-                # Special directory for user information
+                logger.debug("Skipping _users directory")
                 continue
 
             self.ingest_site(self, site)

@@ -1,15 +1,13 @@
-from datetime import datetime
 from typing import List, Optional
 
 @dataclass(frozen=True)
-class Site:
-    wikidot_id: Optional[int]
-    created_at: datetime
-    name: str
+class User:
+    wikidot_id: int
+    created_at: int
+    full_name: str
     slug: str
-    subtitle: str
-    description: str
-
+    account_type: str
+    karma: int
 
 @dataclass(frozen=True)
 class Page:
@@ -45,7 +43,6 @@ class PageVote:
     user_id: int
     value: int
 
-
 @dataclass(frozen=True)
 class File:
     wikidot_id: Optional[int]
@@ -55,6 +52,3 @@ class File:
     size: int
     user_id: int
     created_at: datetime
-
-
-# TODO forums
