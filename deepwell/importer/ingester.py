@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -117,8 +118,9 @@ class Ingester:
     def ingest_users(self):
         logger.info("Ingesting all user data")
         users = []
+        users_directory = self.path("_users")
 
-        for filename in os.listdir(self.path("_users")):
+        for filename in os.listdir(users_directory):
             if filename == "pending.json":
                 logger.debug("Skipping pending.json file")
                 continue
@@ -176,11 +178,11 @@ class Ingester:
                 logger.debug("Skipping _users directory")
                 continue
 
-            self.ingest_site(self, site)
+            self.ingest_site(site)
 
     def ingest_site(self, site):
         logger.info("Ingesting site '%s'", site)
-        self.ingest_pages(self, site)
+        self.ingest_pages(site)
 
     def ingest_pages(self, site_slug):
         logger.info("Ingesting all pages from site")
@@ -372,7 +374,7 @@ class Ingester:
             file_location = file_mapping(str(model.wikidot_id))
             file_path = os.path.join(site_directory, "files", file_location["path"])
             assert (
-                file.url == file_location["url"]
+                model.url == file_location["url"]
             ), "File entry and mapping URLs do not match"
 
             with open(file_path, "rb") as file:

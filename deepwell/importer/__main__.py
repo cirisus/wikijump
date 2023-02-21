@@ -3,7 +3,7 @@
 import argparse
 import logging
 import sys
-from . import run_wikicomma_import
+from .ingester import Ingester
 
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
 LOG_DATE_FORMAT = "[%Y/%m/%d %H:%M:%S]"

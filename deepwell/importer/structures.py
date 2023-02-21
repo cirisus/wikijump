@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import List, Optional
 
 
@@ -16,6 +17,8 @@ class Page:
     wikidot_id: int
     title: str
     slug: str
+    tags: List[str]
+    locked: bool
     discussion_thread_id: Optional[int]
 
 
