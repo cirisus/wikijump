@@ -1,8 +1,16 @@
 import json
 import glob
 import os
+from dataclasses import dataclass
 
-from .structures import User
+@dataclass(frozen=True)
+class User:
+    wikidot_id: int
+    created_at: int
+    full_name: str
+    slug: str
+    account_type: str
+    karma: int
 
 
 def load_users(users_directory):
