@@ -14,10 +14,9 @@ CREATE TABLE IF NOT EXISTS user (
 );
 """
 
+
 class Ingester:
-    __slots__ = (
-        "conn",
-    )
+    __slots__ = ("conn",)
 
     def __init__(self, wikicomma_directory, database_path):
         self.directory = wikicomma_directory
@@ -38,7 +37,15 @@ class Ingester:
     def ingest_users(self):
         users = load_users(self.section("_users"))
         rows = [
-            (user.wikidot_id, user.created_at, user.full_name, user.slug, user.account_type, user.karma) for user in users
+            (
+                user.wikidot_id,
+                user.created_at,
+                user.full_name,
+                user.slug,
+                user.account_type,
+                user.karma,
+            )
+            for user in users
         ]
 
         query = """

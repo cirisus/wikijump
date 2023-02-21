@@ -136,7 +136,9 @@ class WikicommaImporter:
 
             wikitext = wikitext_mapping.get(revision_number)
             if wikitext is None:
-                logger.error("No wikitext found for revision number %d", revision_number)
+                logger.error(
+                    "No wikitext found for revision number %d", revision_number
+                )
                 continue
 
             self.generator.add_page_revision(
@@ -250,7 +252,9 @@ class WikicommaImporter:
             page_revisions_filename = page_revisions_filename.replace(":", "_")
 
         page_revisions_path = os.path.join(
-            site_directory, "pages", page_revisions_filename,
+            site_directory,
+            "pages",
+            page_revisions_filename,
         )
         return SevenZipFile(page_revisions_path, "r")
 

@@ -106,7 +106,13 @@ class Generator:
         # TODO change over when user table changes, remaining fields
         self.append_sql(
             "INSERT INTO users (id, slug, username, avatar_path, created_at) VALUES (%s, %s, %s, %s)",
-            (wikidot_id_or_auto(user), user.slug, user.name, avatar_path, user.created_at),
+            (
+                wikidot_id_or_auto(user),
+                user.slug,
+                user.name,
+                avatar_path,
+                user.created_at,
+            ),
         )
 
         self.id_add(self.user_ids, user.wikidot_id)
@@ -121,7 +127,13 @@ class Generator:
 
         self.append_sql(
             "INSERT INTO site (site_id, name, slug, subtitle, description) VALUES (%s, %s, %s, %s, %s)",
-            (wikidot_id_or_auto(site), site.name, site.slug, site.subtitle, site.description),
+            (
+                wikidot_id_or_auto(site),
+                site.name,
+                site.slug,
+                site.subtitle,
+                site.description,
+            ),
         )
 
         self.id_add(self.site_ids, site.wikidot_id)
@@ -135,7 +147,8 @@ class Generator:
             return
 
         page_category_id = self.add_page_category(
-            page.site_id, get_page_category(page.slug),
+            page.site_id,
+            get_page_category(page.slug),
         )
 
         self.append_sql(
@@ -238,8 +251,8 @@ class Generator:
 
     def add_file(self, file: File):
         if (
-                self.id_exists(self.file_ids, file.wikidot_id)
-                or (file.page_id, file.name) in self.file_names
+            self.id_exists(self.file_ids, file.wikidot_id)
+            or (file.page_id, file.name) in self.file_names
         ):
             return
 
@@ -267,7 +280,8 @@ class Generator:
 
         if text_hash not in self.text_hashes:
             self.append_sql(
-                "INSERT INTO text (hash, contents) VALUES (%s, %s)", (text_hash, text),
+                "INSERT INTO text (hash, contents) VALUES (%s, %s)",
+                (text_hash, text),
             )
             self.text_hashes.add(text_hash)
 

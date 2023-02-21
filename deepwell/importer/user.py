@@ -19,13 +19,15 @@ def load_users(users_directory):
             users_data = json.load(file)
 
         for _, user_data in users_data:
-            users.append(User(
-                full_name=user_data["full_name"],
-                slug=user_data["slug"],
-                created_at=user_data["wikidot_user_since"],
-                account_type=user_data["account_type"],
-                karma=user_data["activity"],
-                wikidot_id=user_data["user_id"],
-            ))
+            users.append(
+                User(
+                    full_name=user_data["full_name"],
+                    slug=user_data["slug"],
+                    created_at=user_data["wikidot_user_since"],
+                    account_type=user_data["account_type"],
+                    karma=user_data["activity"],
+                    wikidot_id=user_data["user_id"],
+                )
+            )
 
     return users

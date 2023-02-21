@@ -12,6 +12,7 @@ class User:
     account_type: str
     karma: int
 
+
 @dataclass(frozen=True)
 class Site:
     wikidot_id: Optional[int]
