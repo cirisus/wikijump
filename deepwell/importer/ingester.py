@@ -1,4 +1,7 @@
+import os
 import sqlite3
+
+from .user import load_users
 
 SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS user (
@@ -16,11 +19,20 @@ class Ingester:
         "conn",
     )
 
-    def __init__(self, database_path):
+    def __init__(self, wikicomma_directory, database_path):
+        self.directory = wikicomma_directory
         self.conn = sqlite3.connect(database_path)
 
-    def seed(self):
+    def setup(self):
         self.conn.executescript(SQLITE_SCHEMA)
 
     def close(self):
         self.conn.close()
+
+    # Private helper methods
+    def section(self, *parts):
+        return os.path.join(self.directory, *parts)
+
+    # Object ingestion
+    def ingest_users(self):
+        users = load_users(self.section("_users"))
