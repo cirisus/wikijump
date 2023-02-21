@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS page (
     wikidot_id INTEGER PRIMARY KEY,
     page_slug TEXT NOT NULL,
     site_slug TEXT NOT NULL,
+    tags TEXT NOT NULL,
     locked INTEGER NOT NULL,
     discussion_thread_id INTEGER,
 
@@ -32,6 +33,14 @@ CREATE TABLE IF NOT EXISTS page_revision (
     comments TEXT NOT NULL,
 
     UNIQUE (page_id, revision_number)
+);
+
+CREATE TABLE IF NOT EXISTS page_vote (
+    page_id INTEGER NOT NULL REFERENCES page(wikidot_id),
+    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    value INTEGER NOT NULL,
+
+    UNIQUE (page_id, user_id)
 );
 """
 
@@ -159,6 +168,7 @@ class Ingester:
             wikidot_id=metadata["page_id"],
             title=metadata.get("title", ""),
             slug=page_slug,
+            tags=metadata["tags"],
             locked=metadata["is_locked"],
             discussion_thread_id=-1,  # TODO unknown
         )
@@ -169,10 +179,11 @@ class Ingester:
             page_slug,
             site_slug,
             title,
+            tags,
             locked,
             discussion_thread_id
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """
 
         with self.conn as cur:
@@ -183,6 +194,7 @@ class Ingester:
                     page_slug,
                     site_slug,
                     page.title,
+                    json.dumps(page.tags),
                     page.locked,
                     page.discussion_thread_id,
                 ),
@@ -193,8 +205,35 @@ class Ingester:
         self.ingest_files(page.wikidot_id, site_slug, metadata["files"])
 
     def ingest_votes(self, page_id, votes):
-        # TODO
-        logger.error("ingest_votes() not implemented")
+        logger.info("Adding %d votes for the page", len(votes))
+
+        def convert_vote_value(value):
+            if isinstance(value, int):
+                return value
+            elif isinstance(value, bool):
+                return 1 if value else -1
+            else:
+                raise TypeError(f"Unknown type for vote value: {type(value)}")
+
+        rows = [
+            (
+                page_id,
+                user_id,
+                convert_vote_value(value),
+            )
+            for user_id, value in votes
+        ]
+
+        query = """
+        INSERT INTO page_vote (
+            page_id,
+            user_id,
+            value
+        ) VALUES (?, ?, ?)
+        """
+
+        with self.conn as cur:
+            cur.executemany(query, rows)
 
     def ingest_revisions(self, page_id, revisions):
         # TODO
