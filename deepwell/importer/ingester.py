@@ -193,7 +193,11 @@ class Ingester:
             logger.info("Ingesting page '%s' (ID %d)", page_slug, page_id)
             page_id = int(page_id)  # JSON keys are always strings
             self.ingest_page(
-                site_directory, file_mapping, site_slug, page_id, page_slug,
+                site_directory,
+                file_mapping,
+                site_slug,
+                page_id,
+                page_slug,
             )
 
     def ingest_page(self, site_directory, file_mapping, site_slug, page_id, page_slug):
