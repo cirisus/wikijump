@@ -37,32 +37,9 @@ if __name__ == "__main__":
         "-o",
         "--sql",
         "--output-sql",
-        dest="sql_path",
+        dest="sqlite_path",
         required=True,
-        help="The location to output the SQL dump to",
-    )
-    argparser.add_argument(
-        "-s",
-        "--shell",
-        "--output-shell",
-        dest="sh_path",
-        required=True,
-        help="The location to output the shell dump to",
-    )
-    argparser.add_argument(
-        "-b",
-        "--s3",
-        "--s3-bucket",
-        dest="s3_bucket",
-        required=True,
-        help="The name of the S3 bucket to use (read-only)",
-    )
-    argparser.add_argument(
-        "-u",
-        "--postgres-url",
-        dest="postgres_url",
-        required=True,
-        help="The DEEPWELL database to connect to (read-only)",
+        help="The path of the SQLite database to write to",
     )
     args = argparser.parse_args()
 
@@ -75,10 +52,10 @@ if __name__ == "__main__":
     logger.setLevel(level=log_level)
     logger.addHandler(log_stdout)
 
-    run_wikicomma_import(
-        wikicomma_directory=args.wikicomma_directory,
-        sql_path=args.sql_path,
-        sh_path=args.sh_path,
-        s3_bucket=args.s3_bucket,
-        postgres_url=args.postgres_url,
-    )
+    ingester = Ingester(args.wikicomma_directory, args.sqlite_database_path)
+    try:
+        ingester.setup()
+        ingester.ingest_users()
+        ingester.ingest_sites()
+    finally:
+        ingester.close()
