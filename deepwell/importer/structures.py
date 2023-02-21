@@ -11,10 +11,7 @@ class User:
 
 @dataclass(frozen=True)
 class Page:
-    wikidot_id: Optional[int]
-    created_at: datetime
-    updated_at: datetime
-    site_id: int
+    wikidot_id: int
     title: str
     slug: str
     discussion_thread_id: Optional[int]

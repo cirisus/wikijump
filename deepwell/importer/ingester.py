@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class Ingester:
     __slots__ = ("conn",)
 
+    # Init and deinit
     def __init__(self, wikicomma_directory, database_path):
         self.directory = wikicomma_directory
         self.conn = sqlite3.connect(database_path)
@@ -32,9 +33,20 @@ class Ingester:
     def close(self):
         self.conn.close()
 
+    # Helper methods
     def path(self, *parts):
         return os.path.join(self.directory, *parts)
 
+    def read_json(self *parts):
+        path = os.path.join(*parts)
+
+        if not os.path.isabs(path):
+            path = self.path(path)
+
+        with open(path) as file:
+            return json.load(file)
+
+    # Main methods, and loaders
     def ingest_users(self):
         logger.info("Ingesting all user data")
         users = load_users()
@@ -102,13 +114,35 @@ class Ingester:
 
     def ingest_site(self, site):
         logger.info("Ingesting site '%s'", site)
-        site_directory = os.path.join(self.directory, site)
+        site_directory = self.path(site)
         self.ingest_pages(self, site_directory)
         self.ingest_files(self, site_directory)
 
     def ingest_pages(self, site_directory):
         logger.info("Ingesting all pages from site")
-        # TODO
+        page_mapping = self.read_json(site_directory, "meta", "page_id_map.json")
+        file_mapping = self.read_json(site_directory, "meta", "file_map.json")
+        logger.info("Processing %d pages", len(page_mapping))
+
+        for page_id, page_slug in page_mapping.items():
+            logger.info("Loading page '%s' (ID %d)", page_slug, page_id)
+            page_id = int(page_id)  # JSON keys are always strings
+            page = self.load_page(site_directory, page_id, page_slug)
+
+    def load_page(self, site_directory, page_id, page_slug):
+        def read_page_metadata():
+            filename = f"{page_slug}.json"
+            metadata = self.read_json(site_directory, "meta", "pages", filename)
+            assert metadata["name"] == page_slug, "Path and metadata slug do not match"
+            return metadata
+
+        metadata = read_page_metadata()
+        return Page(
+            wikidot_id=metadata["page_id"],
+            title=metadata.get("title", ""),
+            slug=page_slug,
+            discussion_thread_id=None,  # TODO unknown
+        )
 
     def ingest_files(self, site_directory):
         logger.info("Ingesting all files from site")
