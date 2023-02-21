@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class User:
@@ -17,11 +20,10 @@ def load_users(users_directory):
 
     for filename in os.listdir(users_directory):
         if filename == "pending.json":
-            # Doesn't contain user info, skip
+            logger.debug("Skipping pending.json")
             continue
 
-        print(f"Loading users from {filename}")
-
+        logger.info("Loading users from %s", filename)
         with open(os.path.join(users_directory, filename)) as file:
             users_data = json.load(file)
 

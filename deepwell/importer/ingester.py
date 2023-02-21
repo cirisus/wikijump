@@ -1,3 +1,4 @@
+import logging
 import os
 import sqlite3
 
@@ -13,6 +14,8 @@ CREATE TABLE IF NOT EXISTS user (
     karma INTEGER NOT NULL
 );
 """
+
+logger = logging.getLogger(__name__)
 
 
 class Ingester:
@@ -30,8 +33,7 @@ class Ingester:
         self.conn.close()
 
     def ingest_users(self):
-        print("+ Ingesting user data")
-
+        logger.info("Ingesting all user data")
         users = load_users(os.path.join(self.directory, "_users"))
         rows = [
             (
@@ -61,8 +63,7 @@ class Ingester:
             cur.executemany(query, rows)
 
     def ingest_sites(self):
-        print("+ Ingesting site data")
-
+        logger.info("Ingesting all site data")
         for site in os.listdir(self.directory):
             if site == "_users":
                 # Special directory for user information
@@ -71,7 +72,7 @@ class Ingester:
             self.ingest_site(self, site)
 
     def ingest_site(self, site):
-        print(f"+ Ingesting site '{site}'")
+        logger.info("Ingesting site '%s'", site)
         site_directory = os.path.join(self.directory, site)
         self.ingest_pages(self, site_directory)
         self.ingest_files(self, site_directory)
