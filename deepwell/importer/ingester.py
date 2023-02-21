@@ -50,6 +50,22 @@ CREATE TABLE IF NOT EXISTS page_vote (
 
     UNIQUE (page_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS file (
+    wikidot_id INTEGER PRIMARY KEY,
+    page_id INTEGER NOT NULL REFERENCES page(wikidot_id),
+    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    created_at INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    mime TEXT NOT NULL,
+    mime_description TEXT NOT NULL,
+    internal_version INTEGER NOT NULL,
+    data BLOB NOT NULL,
+
+    UNIQUE (page_id, name)
+);
 """
 
 logger = logging.getLogger(__name__)
@@ -176,9 +192,11 @@ class Ingester:
         for page_id, page_slug in page_mapping.items():
             logger.info("Ingesting page '%s' (ID %d)", page_slug, page_id)
             page_id = int(page_id)  # JSON keys are always strings
-            self.ingest_page(site_directory, site_slug, page_id, page_slug)
+            self.ingest_page(
+                site_directory, file_mapping, site_slug, page_id, page_slug,
+            )
 
-    def ingest_page(self, site_directory, site_slug, page_id, page_slug):
+    def ingest_page(self, site_directory, file_mapping, site_slug, page_id, page_slug):
         def read_page_metadata():
             filename = self.process_filename(f"{page_slug}.json")
             metadata = self.read_json(site_directory, "meta", "pages", filename)
@@ -222,17 +240,21 @@ class Ingester:
                 ),
             )
 
-        self.ingest_votes(page.wikidot_id, metadata["votings"])
-        self.ingest_files(page.wikidot_id, site_slug, metadata["files"])
+        self.ingest_votes(page_id=page.wikidot_id, votes=metadata["votings"])
         self.ingest_revisions(
-            page.wikidot_id,
-            site_directory,
-            page_slug,
-            page.wikidot_id,
-            metadata["revisions"],
+            site_directory=site_directory,
+            page_slug=page_slug,
+            page_id=page.wikidot_id,
+            revisions=metadata["revisions"],
+        )
+        self.ingest_files(
+            site_directory=site_directory,
+            file_mapping=file_mapping,
+            page_id=page_id,
+            files=metadata["files"],
         )
 
-    def ingest_votes(self, page_id, votes):
+    def ingest_votes(self, *, page_id, votes):
         logger.info("Adding %d votes for this page", len(votes))
 
         def convert_vote_value(value):
@@ -263,7 +285,7 @@ class Ingester:
         with self.conn as cur:
             cur.executemany(query, rows)
 
-    def ingest_revisions(self, site_directory, page_slug, page_id, revisions):
+    def ingest_revisions(self, *, site_directory, page_slug, page_id, revisions):
         logger.info("Adding %d revisions for this page", len(revisions))
 
         query = """
@@ -299,7 +321,6 @@ class Ingester:
                 flags=data["flags"],
                 page_id=page_id,
                 user_id=data["author"],
-                wikitext=wikitexts[data["revision"]],
                 comments=data["commentary"],
             )
 
@@ -314,17 +335,78 @@ class Ingester:
                     (
                         revision.wikidot_id,
                         revision.revision_number,
-                        revision.created_at,
-                        revision.flags,
                         revision.page_id,
                         revision.user_id,
-                        revision.wikitext,
+                        revision.created_at,
+                        revision.flags,
                         revision.comments,
+                        wikitexts[revision.wikidot_id],
                     ),
                 )
 
-    def ingest_files(self, page_id, site_slug, files):
-        # TODO
-        logger.error("ingest_files() not implemented")
+    def ingest_files(self, *, site_directory, file_mapping, page_id, files):
+        logger.info("Ingesting files for this page")
+
+        query = """
+        INSERT INTO file (
+            wikidot_id,
+            page_id,
+            user_id,
+            created_at,
+            name,
+            url,
+            size,
+            mime,
+            mime_description,
+            internal_version,
+            data
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+        def load_file(model):
+            logger.debug("Loading file data for %s", model.name)
+            file_location = file_mapping(str(model.wikidot_id))
+            file_path = os.path.join(site_directory, "files", file_location["path"])
+            assert (
+                file.url == file_location["url"]
+            ), "File entry and mapping URLs do not match"
+
+            with open(file_path, "rb") as file:
+                return file.read()
+
+        for data in files:
+            file = File(
+                wikidot_id=data["file_id"],
+                name=data["name"],
+                url=data["url"],
+                size=data["size_bytes"],
+                mime=data["mime"],
+                mime_description=data["content"],
+                page_id=page_id,
+                user_id=data["author"],
+                created_at=data["stamp"],
+                internal_version=data["internal_version"],
+            )
+            file_data = load_file(file)
+
+            logger.info("Inserting file data for ID %d", file.wikidot_id)
+
+            with self.conn as cur:
+                cur.execute(
+                    query,
+                    (
+                        file.wikidot_id,
+                        file.page_id,
+                        file.user_id,
+                        file.created_at,
+                        file.name,
+                        file.url,
+                        file.size,
+                        file.mime,
+                        file.mime_description,
+                        file.internal_version,
+                        file_data,
+                    ),
+                )
 
     # TODO add forums

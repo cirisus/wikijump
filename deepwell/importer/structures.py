@@ -27,7 +27,6 @@ class PageRevision:
     flags: str
     page_id: int
     user_id: int
-    wikitext: str
     comments: str
 
 
@@ -42,8 +41,11 @@ class PageVote:
 class File:
     wikidot_id: int
     page_id: int
-    name: str
-    mime: str
-    size: int
     user_id: int
     created_at: int
+    name: str
+    url: str
+    size: int
+    mime: str
+    mime_description: str
+    internal_version: int

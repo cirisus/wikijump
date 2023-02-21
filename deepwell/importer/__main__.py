@@ -61,7 +61,9 @@ if __name__ == "__main__":
     logger.addHandler(log_stdout)
 
     ingester = Ingester(
-        args.wikicomma_directory, args.sqlite_database_path, args.replace_colons,
+        args.wikicomma_directory,
+        args.sqlite_database_path,
+        args.replace_colons,
     )
     try:
         ingester.setup()
