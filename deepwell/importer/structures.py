@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+
 @dataclass(frozen=True)
 class User:
     wikidot_id: int
@@ -8,6 +9,7 @@ class User:
     slug: str
     account_type: str
     karma: int
+
 
 @dataclass(frozen=True)
 class Page:
@@ -39,6 +41,7 @@ class PageVote:
     page_id: int
     user_id: int
     value: int
+
 
 @dataclass(frozen=True)
 class File:
