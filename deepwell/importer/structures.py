@@ -5,13 +5,12 @@ from typing import List, Optional
 
 @dataclass(frozen=True)
 class User:
-    # None means the ID isn't known, so we should assign our own
-    wikidot_id: Optional[int]
-    created_at: datetime
-    name: str
+    wikidot_id: int
+    created_at: int
+    full_name: str
     slug: str
-    avatar: bytes
-
+    account_type: str
+    karma: int
 
 @dataclass(frozen=True)
 class Site:
