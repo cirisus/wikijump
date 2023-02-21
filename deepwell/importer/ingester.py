@@ -326,3 +326,5 @@ class Ingester:
     def ingest_files(self, page_id, site_slug, files):
         # TODO
         logger.error("ingest_files() not implemented")
+
+    # TODO add forums
