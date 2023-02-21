@@ -66,38 +66,9 @@ class Ingester:
         with open(path) as file:
             return json.load(file)
 
-    # Main methods, and loaders
+    # Main ingestion methods
     def ingest_users(self):
         logger.info("Ingesting all user data")
-        users = self.load_users()
-        rows = [
-            (
-                user.wikidot_id,
-                user.created_at,
-                user.full_name,
-                user.slug,
-                user.account_type,
-                user.karma,
-            )
-            for user in users
-        ]
-
-        query = """
-        INSERT INTO user (
-            wikidot_id,
-            created_at,
-            full_name,
-            slug,
-            account_type,
-            karma
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        """
-
-        with self.conn as cur:
-            cur.executemany(query, rows)
-
-    def load_users(self):
         users = []
 
         for filename in os.listdir(self.path("_users")):
@@ -105,10 +76,12 @@ class Ingester:
                 logger.debug("Skipping pending.json file")
                 continue
 
-            logger.info("Loading users from %s", filename)
+            logger.info("Ingesting users from %s", filename)
             with open(os.path.join(users_directory, filename)) as file:
                 users_data = json.load(file)
 
+            # Load user data
+            users.clear()
             for _, user_data in users_data:
                 users.append(
                     User(
@@ -121,7 +94,33 @@ class Ingester:
                     )
                 )
 
-        return users
+            # Insert into database
+            rows = [
+                (
+                    user.wikidot_id,
+                    user.created_at,
+                    user.full_name,
+                    user.slug,
+                    user.account_type,
+                    user.karma,
+                )
+                for user in users
+            ]
+
+            query = """
+            INSERT INTO user (
+                wikidot_id,
+                created_at,
+                full_name,
+                slug,
+                account_type,
+                karma
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """
+
+            with self.conn as cur:
+                cur.executemany(query, rows)
 
     def ingest_sites(self):
         logger.info("Ingesting all site data")
