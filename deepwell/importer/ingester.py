@@ -3,9 +3,9 @@ import os
 import re
 import sqlite3
 
-from .structures import *
-
 from py7zr import SevenZipFile
+
+from .structures import *
 
 REVISION_FILENAME_REGEX = re.compile(r"(\d+)\.txt")
 
