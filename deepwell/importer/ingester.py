@@ -24,7 +24,8 @@ class Ingester:
         self.conn = sqlite3.connect(database_path)
 
     def setup(self):
-        self.conn.executescript(SQLITE_SCHEMA)
+        cur = self.conn.cursor()
+        cur.executescript(SQLITE_SCHEMA)
 
     def close(self):
         self.conn.close()
@@ -36,3 +37,23 @@ class Ingester:
     # Object ingestion
     def ingest_users(self):
         users = load_users(self.section("_users"))
+        rows = [
+            (user.wikidot_id, user.created_at, user.full_name, user.slug, user.account_type, user.karma) for user in users
+        ]
+
+        query = """
+        INSERT INTO user (
+            wikidot_id,
+            created_at,
+            full_name,
+            slug,
+            account_type,
+            karma
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """
+
+        cur = self.conn.cursor()
+        cur.executemany(query, rows)
+
+    # TODO
