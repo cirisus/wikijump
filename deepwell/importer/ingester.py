@@ -67,6 +67,15 @@ CREATE TABLE IF NOT EXISTS file (
 
     UNIQUE (page_id, name)
 );
+
+CREATE TABLE IF NOT EXISTS forum_category (
+    wikidot_id INTEGER PRIMARY KEY,
+    site_slug TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS forum_
 """
 
 logger = logging.getLogger(__name__)
@@ -183,9 +192,10 @@ class Ingester:
     def ingest_site(self, site):
         logger.info("Ingesting site '%s'", site)
         self.ingest_pages(site)
+        self.ingest_forums(site)
 
     def ingest_pages(self, site_slug):
-        logger.info("Ingesting all pages from site")
+        logger.info("Ingesting all pages for site '%s'", site)
         site_directory = self.path(site_slug)
         page_mapping = self.read_json(site_directory, "meta", "page_id_map.json")
         file_mapping = self.read_json(site_directory, "meta", "file_map.json")
@@ -415,4 +425,48 @@ class Ingester:
                     ),
                 )
 
-    # TODO add forums
+    def ingest_forums(self, site_slug):
+        logger.info("Ingesting all forum data for site '%s'", site_slug)
+        site_directory = self.path(site_slug)
+        meta_directory = os.path.join(site_directory, "meta", "forum")
+        forum_directory = os.path.join(site_directory, "forum")
+
+        self.ingest_forum_categories(site_slug, meta_directory)
+
+    def ingest_forum_categories(self, site_slug, meta_directory):
+        logger.info("Ingesting forum categories")
+        directory = os.path.join(meta_directory, "categories")
+
+        categories = []
+        for path in os.listdir(directory):
+            data = self.read_json(directory, path)
+            categories.append(
+                ForumCategory(
+                    wikidot_id=data["id"],
+                    title=data["title"],
+                    description=data["description"],
+                    posts=data["posts"],
+                    threads=data["threads"],
+                    last_user=data["lastUser"],
+                    full_scan=data["full_scan"],
+                    last_page=data["last_page"],
+                )
+            )
+
+        query = """
+        INSERT OR REPLACE INTO forum_category (
+            wikidot_id,
+            site_slug,
+            title,
+            description
+        ) VALUES (?, ?, ?, ?)
+        """
+
+        rows = [
+            (category.wikidot_id, site_slug, category.title, category.description)
+            for category in categories
+        ]
+
+        with self.conn as cur:
+            logger.info("Inserting %d forum categories", len(rows))
+            cur.executemany(query, rows)

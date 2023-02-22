@@ -52,3 +52,15 @@ class File:
     mime: str
     mime_description: str
     internal_version: int
+
+
+@dataclass(frozen=True)
+class ForumCategory:
+    wikidot_id: int
+    title: str
+    description: str
+    posts: int
+    threads: int
+    last_user: Optional[int]
+    full_scan: bool
+    last_page: int
