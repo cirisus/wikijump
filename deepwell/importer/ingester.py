@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS page (
     page_slug TEXT NOT NULL,
     site_slug TEXT NOT NULL,
     tags TEXT NOT NULL,
-    locked INTEGER NOT NULL,
+    locked INTEGER NOT NULL,  -- boolean
     discussion_thread_id INTEGER,
 
     UNIQUE (site_slug, page_slug)
@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS file (
     UNIQUE (page_id, name)
 );
 
+-- Nothing collected for forum groups at present
+
 CREATE TABLE IF NOT EXISTS forum_category (
     wikidot_id INTEGER PRIMARY KEY,
     site_slug TEXT NOT NULL,
@@ -75,7 +77,31 @@ CREATE TABLE IF NOT EXISTS forum_category (
     description TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS forum_
+CREATE TABLE IF NOT EXISTS forum_thread (
+    wikidot_id INTEGER PRIMARY KEY,
+    forum_category_id INTEGER NOT NULL REFERENCES forum_category(wikidot_id),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    user_id INTEGER REFERENCES user(wikidot_id),  -- NULL if Wikidot
+    sticky INTEGER NOT NULL  -- boolean
+);
+
+CREATE TABLE IF NOT EXISTS forum_post (
+    wikidot_id INTEGER PRIMARY KEY,
+    forum_thread_id INTEGER NOT NULL REFERENCES forum_thread(wikidot_id),
+    parent_post_id INTEGER REFERENCES forum_post(wikidot_id),
+    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    created_at INTEGER NOT NULL,
+    title TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS forum_post_revision (
+    wikidot_id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    created_at INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    html TEXT NOT NULL
+);
 """
 
 logger = logging.getLogger(__name__)
@@ -432,9 +458,10 @@ class Ingester:
         forum_directory = os.path.join(site_directory, "forum")
 
         self.ingest_forum_categories(site_slug, meta_directory)
+        self.ingest_forum_threads(site_slug, meta_directory, forum_directory)
 
     def ingest_forum_categories(self, site_slug, meta_directory):
-        logger.info("Ingesting forum categories")
+        logger.info("Ingesting forum categories for site '%s'", site_slug)
         directory = os.path.join(meta_directory, "categories")
 
         categories = []
@@ -470,3 +497,30 @@ class Ingester:
         with self.conn as cur:
             logger.info("Inserting %d forum categories", len(rows))
             cur.executemany(query, rows)
+
+    def ingest_forum_threads(self, site_slug, meta_directory, forum_directory):
+        logger.info("Ingesting forum threads for site '%s'", site_slug)
+        for category in os.listdir(meta_directory):
+            if category == "categories":
+                logger.debug("Skipping categories directory")
+                continue
+
+            category_id = int(category)
+            thread_directory = os.path.join(meta_directory, category)
+            for thread in os.listdir(thread_directory):
+                self.ingest_forum_thread(thread_directory)
+                # TODO
+
+    def ingest_forum_thread(self, thread_directory):
+        logger.info("Ingesting forum posts from thread")
+        # TODO
+        ...
+
+    def ingest_forum_thread_revisions(self):
+        # TODO
+        # remember "revisions" means *revisions other than the current one
+        ...
+
+    def ingest_forum_thread_revision(self):
+        # TODO
+        ...
