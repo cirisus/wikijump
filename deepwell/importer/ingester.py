@@ -157,7 +157,7 @@ class Ingester:
             ]
 
             query = """
-            INSERT INTO user (
+            INSERT OR REPLACE INTO user (
                 wikidot_id,
                 created_at,
                 full_name,
@@ -220,7 +220,7 @@ class Ingester:
         )
 
         query = """
-        INSERT INTO page (
+        INSERT OR REPLACE INTO page (
             wikidot_id,
             page_slug,
             site_slug,
@@ -281,7 +281,7 @@ class Ingester:
         ]
 
         query = """
-        INSERT INTO page_vote (
+        INSERT OR REPLACE INTO page_vote (
             page_id,
             user_id,
             value
@@ -295,7 +295,7 @@ class Ingester:
         logger.info("Adding %d revisions for this page", len(revisions))
 
         query = """
-        INSERT INTO page_revision (
+        INSERT OR REPLACE INTO page_revision (
             wikidot_id,
             revision_number,
             page_id,
@@ -354,7 +354,7 @@ class Ingester:
         logger.info("Ingesting files for this page")
 
         query = """
-        INSERT INTO file (
+        INSERT OR REPLACE INTO file (
             wikidot_id,
             page_id,
             user_id,
