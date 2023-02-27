@@ -11,6 +11,12 @@ from .structures import *
 REVISION_FILENAME_REGEX = re.compile(r"(\d+)\.txt")
 
 SQLITE_SCHEMA = """
+
+-- General note: No foreign key constraints.
+--               If there are missing items, instead of needing
+--               to re-ingest all child elements, we just add
+--               the (then-)invalid IDs and figure it out manually later.
+
 CREATE TABLE IF NOT EXISTS user (
     wikidot_id INTEGER PRIMARY KEY,
     created_at INTEGER NOT NULL,
@@ -34,8 +40,8 @@ CREATE TABLE IF NOT EXISTS page (
 CREATE TABLE IF NOT EXISTS page_revision (
     wikidot_id INTEGER PRIMARY KEY,
     revision_number INTEGER NOT NULL
-    page_id INTEGER NOT NULL REFERENCES page(wikidot_id),
-    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    page_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     flags TEXT NOT NULL,
     comments TEXT NOT NULL,
@@ -45,8 +51,8 @@ CREATE TABLE IF NOT EXISTS page_revision (
 );
 
 CREATE TABLE IF NOT EXISTS page_vote (
-    page_id INTEGER NOT NULL REFERENCES page(wikidot_id),
-    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    page_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     value INTEGER NOT NULL,
 
     UNIQUE (page_id, user_id)
@@ -54,8 +60,8 @@ CREATE TABLE IF NOT EXISTS page_vote (
 
 CREATE TABLE IF NOT EXISTS file (
     wikidot_id INTEGER PRIMARY KEY,
-    page_id INTEGER NOT NULL REFERENCES page(wikidot_id),
-    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    page_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
@@ -79,7 +85,7 @@ CREATE TABLE IF NOT EXISTS forum_category (
 
 CREATE TABLE IF NOT EXISTS forum_thread (
     wikidot_id INTEGER PRIMARY KEY,
-    forum_category_id INTEGER NOT NULL REFERENCES forum_category(wikidot_id),
+    forum_category_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     user_id INTEGER REFERENCES user(wikidot_id),  -- NULL if Wikidot
@@ -88,16 +94,16 @@ CREATE TABLE IF NOT EXISTS forum_thread (
 
 CREATE TABLE IF NOT EXISTS forum_post (
     wikidot_id INTEGER PRIMARY KEY,
-    forum_thread_id INTEGER NOT NULL REFERENCES forum_thread(wikidot_id),
-    parent_post_id INTEGER REFERENCES forum_post(wikidot_id),
-    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    forum_thread_id INTEGER NOT NULL,
+    parent_post_id INTEGER,
+    user_id INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     title TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS forum_post_revision (
     wikidot_id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES user(wikidot_id),
+    user_id INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     title TEXT NOT NULL,
     html TEXT NOT NULL
