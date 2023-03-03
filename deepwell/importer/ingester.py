@@ -468,7 +468,7 @@ class Ingester:
 
     def ingest_forum_categories(self, site_slug, meta_directory):
         logger.info("Ingesting forum categories for site '%s'", site_slug)
-        directory = os.path.join(meta_directory, "categories")
+        directory = os.path.join(meta_directory, "category")
 
         categories = []
         for path in os.listdir(directory):
@@ -507,7 +507,7 @@ class Ingester:
     def ingest_forum_threads(self, site_slug, meta_directory, forum_directory):
         logger.info("Ingesting forum threads for site '%s'", site_slug)
         for category in os.listdir(meta_directory):
-            if category == "categories":
+            if category == "category":
                 logger.debug("Skipping categories directory")
                 continue
 
