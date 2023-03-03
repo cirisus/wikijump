@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS forum_thread (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     user_id INTEGER,  -- NULL if made by Wikidot
+    locked INTEGER NOT NULL,  -- boolean
     sticky INTEGER NOT NULL  -- boolean
 );
 
@@ -514,19 +515,125 @@ class Ingester:
             category_id = int(category)
             thread_directory = os.path.join(meta_directory, category)
             for thread in os.listdir(thread_directory):
-                self.ingest_forum_thread(thread_directory)
-                # TODO
+                thread_data = self.read_json(thread_directory, thread)
+                self.ingest_forum_thread(category_id, thread_data)
 
-    def ingest_forum_thread(self, thread_directory):
-        logger.info("Ingesting forum posts from thread")
-        # TODO
-        ...
+    def ingest_forum_thread(self, forum_category_id, data):
+        logger.info("Ingesting forum thread")
 
-    def ingest_forum_thread_revisions(self):
-        # TODO
-        # remember "revisions" means *revisions other than the current one
-        ...
+        thread = ForumThread(
+            wikidot_id=data["id"],
+            forum_category_id=forum_category_id,
+            created_at=data["started"],
+            user_id=data["startedUser"],
+            title=data["title"],
+            description=data["description"],
+            posts=data["postsNum"],
+            last_post_time=data.get("last"),
+            last_post_user=data.get("lastUser"),
+            locked=-1,  # TODO
+            sticky=data["sticky"],
+        )
+
+        query = """
+        INSERT OR REPLACE INTO forum_thread (
+            wikidot_id,
+            forum_category_id,
+            title,
+            description,
+            user_id,
+            locked,
+            sticky
+        ) VALUES (?, ?, ?, ?, ?)
+        """
+
+        with self.conn as cur:
+            logger.info("Inserting forum thread ID %d", thread.wikidot_id)
+            cur.execute(
+                query,
+                (
+                    thread.wikidot_id,
+                    thread.forum_category_id,
+                    thread.title,
+                    thread.description,
+                    thread.user_id,
+                    thread.locked,
+                    thread.sticky,
+                ),
+            )
+
+        self.ingest_forum_thread_posts(data["posts"])
+
+    def ingest_forum_thread_posts(self, forum_thread_id, posts):
+        logger.debug("Ingesting forum posts from thread ID %d", forum_thread_id)
+
+        for post in posts:
+            self.ingest_forum_thread_post(forum_thread_id, None, post)
+
+    def ingest_forum_thread_post(self, forum_thread_id, parent_post_id, data):
+        logger.info("Ingesting forum post data")
+
+        post = ForumPost(
+            wikidot_id=data["id"],
+            forum_thread_id=forum_thread_id,
+            parent_post_id=parent_post_id,
+            title=data["title"],
+            created_at=data["stamp"],
+            user_id=data["poster"],
+            last_edit_at=data.get("lastEdit"),
+            last_edit_by=data.get("lastEditBy"),
+        )
+
+        # Insert into database
+        query = """
+        INSERT OR REPLACE INTO forum_post (
+            wikidot_id,
+            forum_thread_id,
+            parent_post_id,
+            user_id,
+            created_at,
+            title
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        """
+
+        with self.conn as cur:
+            logger.info("Inserting forum thread post ID %d", post.wikidot_id)
+            cur.execute(
+                query,
+                (
+                    post.wikidot_id,
+                    post.forum_thread_id,
+                    post.user_id,
+                    post.created_at,
+                    post.title,
+                ),
+            )
+
+        # Recursively go through children
+        # (This will not be endless because there is a max forum depth)
+        for child_post in data["children"]:
+            self.ingest_forum_thread_post(forum_thread_id, post.wikidot_id, child_post)
+
+        # Add revisions for this post
+        #
+        # This means children *revisions* are inserted before the
+        # parent, but that's fine since the main row itself is
+        # added in correct order.
+        #
+        # (That said we don't have foreign key constraints so this
+        # difference is mostly academic...)
+        self.ingest_forum_thread_revisions(data["revisions"])
+
+    def ingest_forum_thread_revisions(self, revision_data):
+        # NOTE: IMPORTANT
+        #       If there is only 1 revision (i.e. post has not been edited)
+        #       then revisions is EMPTY
+        #
+        #       need to extract and fetch from 7z for all
+        #
+        #       sort by ID? get revision_number from that
+        logger.error("TODO: ingest_forum_thread_revisions")
 
     def ingest_forum_thread_revision(self):
+        logger.error("TODO: ingest_forum_thread_revision")
         # TODO
-        ...

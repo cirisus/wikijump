@@ -64,3 +64,36 @@ class ForumCategory:
     last_user: Optional[int]
     full_scan: bool
     last_page: int
+
+
+@dataclass(frozen=True)
+class ForumThread:
+    wikidot_id: int
+    forum_category_id: int
+    created_at: int
+    user_id: Optional[int]
+    title: str
+    description: str
+    posts: int
+    last_post_time: Optional[int]
+    last_post_user: Optional[int]
+    locked: bool
+    sticky: bool
+
+
+@dataclass(frozen=True)
+class ForumPost:
+    wikidot_id: int
+    forum_thread_id: int
+    parent_post_id: Optional[int]
+    title: str
+    created_at: int
+    user_id: int
+    last_edit_at: Optional[int]
+    last_edit_by: Optional[int]
+
+
+@dataclass(frozen=True)
+class ForumRevision:
+    # TODO
+    ...
