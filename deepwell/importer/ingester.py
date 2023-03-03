@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS forum_thread (
     forum_category_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    user_id INTEGER,  -- NULL if Wikidot
+    user_id INTEGER,  -- NULL if made by Wikidot
     sticky INTEGER NOT NULL  -- boolean
 );
 
