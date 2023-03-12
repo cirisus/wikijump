@@ -610,7 +610,8 @@ class Ingester:
             )
 
         # Recursively go through children
-        # (This will not be endless because there is a max forum depth)
+        # (This will not be endless because there is a max forum depth,
+        # and the overall graph is acyclic.)
         for child_post in data["children"]:
             self.ingest_forum_thread_post(forum_thread_id, post.wikidot_id, child_post)
 
