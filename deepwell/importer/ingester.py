@@ -8,7 +8,8 @@ from py7zr import SevenZipFile
 
 from .structures import *
 
-REVISION_FILENAME_REGEX = re.compile(r"(\d+)\.txt")
+PAGE_REVISION_FILENAME_REGEX = re.compile(r"(\d+)\.txt")
+FORUM_POST_REVISION_FILENAME_REGEX = re.compile(r"(\d+)\/(\d+|latest)\.html")
 
 SQLITE_SCHEMA = """
 
@@ -104,10 +105,12 @@ CREATE TABLE IF NOT EXISTS forum_post (
 
 CREATE TABLE IF NOT EXISTS forum_post_revision (
     wikidot_id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    forum_post_id INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     title TEXT NOT NULL,
-    html TEXT NOT NULL
+    html TEXT NOT NULL,
+    wikitext TEXT
 );
 """
 
@@ -151,9 +154,15 @@ class Ingester:
 
         return filename
 
-    def open_revisions(self, site_directory, page_slug):
+    def open_page_revisions(self, site_directory, page_slug):
         filename = self.process_filename(f"{page_slug}.7z")
         path = os.path.join(site_directory, "pages", filename)
+        return SevenZipFile(path, "r")
+
+    def open_post_revisions(self, site_directory, category_id, thread_id):
+        path = os.path.join(
+            site_directory, "forum", f"{category_id}", f"{thread_id}.7z",
+        )
         return SevenZipFile(path, "r")
 
     # Main ingestion methods
@@ -345,37 +354,37 @@ class Ingester:
             user_id,
             created_at,
             flags,
-            comments,
-            wikitext
+            wikitext,
+            comments
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         logger.info("Loading wikitext revisions for this page")
         wikitexts = {}
-        with self.open_revisions(site_directory, page_slug) as archive:
+        with self.open_page_revisions(site_directory, page_slug) as archive:
             for filename, data in archive.readall().items():
                 logger.debug("Found file in archive: %s", filename)
                 match = REVISION_FILENAME_REGEX.fullmatch(filename)
                 revision_number = int(match[1])
-                wikitext = data.read().decode("utf-8")
-
-                wikitexts[revision_number] = wikitext
+                wikitexts[revision_number] = data.read().decode("utf-8")
 
         logger.info("Inserting revisions for this page")
         for data in revisions:
+            revision_id = data["global_revision"]
             revision = PageRevision(
-                wikidot_id=data["global_revision"],
+                wikidot_id=revision_id,
                 revision_number=data["revision"],
                 created_at=data["stamp"],
                 flags=data["flags"],
                 page_id=page_id,
                 user_id=data["author"],
+                wikitext=wikitexts[revision_id],
                 comments=data["commentary"],
             )
 
             with self.conn as cur:
                 logger.info(
-                    "Inserting revision #%d, ID %d",
+                    "Inserting page revision #%d, ID %d",
                     revision.revision_number,
                     revision.wikidot_id,
                 )
@@ -388,8 +397,8 @@ class Ingester:
                         revision.user_id,
                         revision.created_at,
                         revision.flags,
+                        revision.wikitext,
                         revision.comments,
-                        wikitexts[revision.wikidot_id],
                     ),
                 )
 
@@ -623,12 +632,72 @@ class Ingester:
         #
         # (That said we don't have foreign key constraints so this
         # difference is mostly academic...)
-        self.ingest_forum_thread_revisions(data["revisions"])
+        self.ingest_forum_thread_revisions(
+            site_directory, category_id, data["revisions"],
+        )
 
-    def ingest_forum_thread_revisions(self, revision_data):
+    def ingest_forum_thread_revisions(
+        self, site_directory, category_id, revisions_data,
+    ):
         # NOTE: IMPORTANT
         #       If there is only 1 revision (i.e. post has not been edited)
         #       then revisions is EMPTY
+
+        logger.info("Loading wikitext revisions for this forum thread")
+        htmls = {}
+        with self.open_post_revisions(
+            site_directory, category_id, thread_id
+        ) as archive:
+            for filename, data in archive.readall().items():
+                logger.debug("Found file in archive: %s", filename)
+                match = FORUM_POST_REVISION_FILENAME_REGEX.fullmatch(filename)
+                forum_post_id = int(match[1])
+                revision_id = None if match[2] == "latest" else int(match[2])
+                htmls[(forum_post_id, revision_id)] = data.read().decode("utf-8")
+
+        # TODO current revision (info same as forum post)
+        logger.info("Inserting revisions for this forum thread")
+        for data in revisions_data:
+            revision_id = data["id"]
+            forum_post_id = ...  # TODO where does this come from?
+            revision = ForumRevision(
+                wikidot_id=revision_id,
+                forum_post_id=forum_post_id,
+                created_at=data["stamp"],
+                user_id=data["author"],
+                title=data["title"],
+                html=htmls[(forum_post_id, revision_id)],
+                wikitext=None,  # TODO run unrenderer
+            )
+
+            query = """
+            INSERT OR REPLACE INTO forum_post_revision (
+                wikidot_id,
+                forum_post_id,
+                created_at,
+                user_id,
+                user_id,
+                title,
+                html,
+                wikitext
+            )
+            """
+
+            with self.conn as cur:
+                logger.info("Inserting forum post revision ID %d", revision.wikidot_id)
+                cur.execute(
+                    query,
+                    (
+                        revision.wikidot_id,
+                        revision.forum_post_id,
+                        revision.created_at,
+                        revision.user_id,
+                        revision.title,
+                        revision.html,
+                        revision.wikitext,
+                    ),
+                )
+
         #
         #       need to extract and fetch from 7z for all
         #

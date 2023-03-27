@@ -30,6 +30,7 @@ class PageRevision:
     flags: str
     page_id: int
     user_id: int
+    wikitext: str
     comments: str
 
 
@@ -95,5 +96,10 @@ class ForumPost:
 
 @dataclass(frozen=True)
 class ForumRevision:
-    # TODO
-    ...
+    wikidot_id: int
+    forum_post_id: int
+    created_at: int
+    user_id: int
+    title: str
+    html: str
+    wikitext: Optional[str]
