@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS forum_post (
 );
 
 CREATE TABLE IF NOT EXISTS forum_post_revision (
-    wikidot_id INTEGER PRIMARY KEY,
+    wikidot_id INTEGER PRIMARY KEY,  -- negative with forum_post_id if latest
     forum_post_id INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
@@ -643,23 +643,24 @@ class Ingester:
         #       If there is only 1 revision (i.e. post has not been edited)
         #       then revisions is EMPTY
 
+        # TODO current revision (info same as forum post)
         logger.info("Loading wikitext revisions for this forum thread")
         htmls = {}
         with self.open_post_revisions(
-            site_directory, category_id, thread_id
+            site_directory, category_id, thread_id,
         ) as archive:
             for filename, data in archive.readall().items():
                 logger.debug("Found file in archive: %s", filename)
                 match = FORUM_POST_REVISION_FILENAME_REGEX.fullmatch(filename)
                 forum_post_id = int(match[1])
-                revision_id = None if match[2] == "latest" else int(match[2])
+                # Because latest revisions have no forum post revision ID,
+                # we have to generate a different unique integer value to use
+                revision_id = -forum_post_id if match[2] == "latest" else int(match[2])
                 htmls[(forum_post_id, revision_id)] = data.read().decode("utf-8")
 
-        # TODO current revision (info same as forum post)
         logger.info("Inserting revisions for this forum thread")
-        for data in revisions_data:
+        for ((forum_post_id, revision_id), html) in htmls.items():
             revision_id = data["id"]
-            forum_post_id = ...  # TODO where does this come from?
             revision = ForumRevision(
                 wikidot_id=revision_id,
                 forum_post_id=forum_post_id,
