@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  database:
+  postgres:
     build:
       context: ../../..
       dockerfile: install/local/dev/postgres/Dockerfile
@@ -20,7 +20,7 @@ services:
       timeout: 5s
       retries: 6
 
-  files:
+  minio:
     build: minio
     restart: always
     environment:
@@ -38,7 +38,7 @@ services:
       - "9000:9000"
       - "9001:9001"
 
-  cache:
+  redis:
     build: redis
     restart: always
     # You can add a volume for /data if you wish
@@ -50,10 +50,10 @@ services:
     ports:
       - "6379:6379"
 
-  api:
+  deepwell:
     build:
       context: ../../..
-      dockerfile: install/local/dev/api/Dockerfile
+      dockerfile: install/local/dev/deepwell/Dockerfile
     ports:
       - "2747:2747"
     links:
@@ -76,23 +76,23 @@ services:
       timeout: 2s
       retries: 3
     depends_on:
-      cache:
+      redis:
         condition: service_healthy
-      database:
+      postgres:
         condition: service_healthy
-      files:
+      minio:
         condition: service_healthy
 
-  web:
+  framerail:
     build:
       context: ../../..
-      dockerfile: install/local/dev/web/Dockerfile
+      dockerfile: install/local/dev/framerail/Dockerfile
     ports:
       - "3000:3000"
     links:
-      - api
+      - deepwell
     environment:
-      - "DEEPWELL_HOST=api"
+      - "DEEPWELL_HOST=deepwell"
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-If", "http://localhost:3000/"]
@@ -108,7 +108,7 @@ services:
       - "80:80"
       - "443:443"
     links:
-      - web
+      - framerail
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-If", "http://localhost/"]

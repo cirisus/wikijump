@@ -40,8 +40,8 @@ resource "aws_ssm_parameter" "DB_ECR_URL" {
   value = aws_ecr_repository.db_ecr.repository_url
 }
 
-resource "aws_ecr_repository" "api_ecr" {
-  name = "wikijump-${local.environment}/api"
+resource "aws_ecr_repository" "deepwell_ecr" {
+  name = "wikijump-${local.environment}/deepwell"
   encryption_configuration {
     encryption_type = "KMS"
   }

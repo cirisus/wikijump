@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  api:
+  deepwell:
     volumes:
       # Rust sources
       - type: bind
@@ -34,7 +34,7 @@ services:
         source: ../../../locales
         target: /opt/locales
         read_only: true
-  web:
+  framerail:
     volumes:
       # Typescript/Svelte files
       - type: bind

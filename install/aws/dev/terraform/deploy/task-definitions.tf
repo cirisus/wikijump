@@ -1,16 +1,16 @@
-module "api" {
+module "deepwell" {
   source = "../modules/secure-container-definitions"
 
-  container_name               = "api"
+  container_name               = "deepwell"
   container_image              = "${data.aws_ssm_parameter.API_ECR_URL.value}:develop"
-  container_memory_reservation = var.ecs_api_memory / 8
+  container_memory_reservation = var.ecs_deepwell_memory / 8
   essential                    = true
   environment                  = []
 
   log_configuration = {
     logDriver = "awslogs"
     options = {
-      "awslogs-group"         = "ecs/api-${var.environment}"
+      "awslogs-group"         = "ecs/deepwell-${var.environment}"
       "awslogs-region"        = var.region
       "awslogs-stream-prefix" = "ecs"
     }
@@ -28,7 +28,7 @@ module "api" {
   secrets = [
     {
       name      = "RATE_LIMIT_SECRET"
-      valueFrom = var.api_ratelimit_secret
+      valueFrom = var.deepwell_ratelimit_secret
     },
     {
       name      = "WIKIJUMP_DB_HOST"
@@ -37,7 +37,7 @@ module "api" {
   ]
 
   docker_labels = {
-    "com.datadoghq.ad.check_names"  = "[\"api\"]",
+    "com.datadoghq.ad.check_names"  = "[\"deepwell\"]",
     "com.datadoghq.ad.init_configs" = "[{}]",
     "com.datadoghq.ad.instances"    = "{\"url\":\"%%host%%\",\"port\":\"11211\"}"
   }
@@ -177,7 +177,7 @@ module "php-fpm" {
 
   container_depends_on = [
     {
-      containerName = "api"
+      containerName = "deepwell"
       condition     = "HEALTHY"
     },
     {
@@ -186,12 +186,12 @@ module "php-fpm" {
     }
   ]
 
-  links = ["api:api", "cache:cache", "database:database"]
+  links = ["deepwell:deepwell", "cache:cache", "database:database"]
 
   secrets = [
     {
       name      = "WIKIJUMP_API_RATE_LIMIT_SECRET"
-      valueFrom = var.api_ratelimit_secret
+      valueFrom = var.deepwell_ratelimit_secret
     },
     {
       name      = "WIKIJUMP_URL_DOMAIN"
@@ -225,7 +225,7 @@ module "datadog" {
   environment = [
     {
       name  = "DD_API_KEY"
-      value = var.datadog_api_key
+      value = var.datadog_deepwell_key
     },
     {
       name  = "DD_SITE"
