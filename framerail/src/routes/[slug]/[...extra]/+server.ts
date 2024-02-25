@@ -74,6 +74,18 @@ export async function POST(event) {
         compiledHtml,
         wikitext
       )
+    } else if (extra.includes("vote")) {
+      let action = data.get("action")?.toString()
+      let valueStr = data.get("value")?.toString()
+      let value = valueStr ? parseInt(valueStr) : null
+
+      res = await page.pageVote(
+        siteId,
+        pageId,
+        session?.user_id,
+        action,
+        value
+      )
     }
 
     return new Response(JSON.stringify(res))
