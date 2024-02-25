@@ -509,9 +509,9 @@
         <button
           class="vote-subbutton clickable"
           type="button"
-          on:click|stopPropagation={() => castVote(-1)}
+          on:click|stopPropagation={() => castVote(1)}
         >
-          -1
+          +1
         </button>
         <button
           class="vote-subbutton clickable"
@@ -523,9 +523,9 @@
         <button
           class="vote-subbutton clickable"
           type="button"
-          on:click|stopPropagation={() => castVote(1)}
+          on:click|stopPropagation={() => castVote(-1)}
         >
-          +1
+          -1
         </button>
       </div>
       <button
